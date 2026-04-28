@@ -22,6 +22,7 @@ spec:
       initContainers:
         - name: wait-for-director
           image: curlimages/curl:8.19.0
+          imagePullPolicy: IfNotPresent
           command: ["sh", "/scripts/wait-for-url.sh"]
           env:
             - name: WAIT_URLS
@@ -32,6 +33,7 @@ spec:
       containers:
         - name: registry
           image: hub.opensciencegrid.org/pelican_platform/registry:{{ .Tag }}
+          imagePullPolicy: IfNotPresent
           ports:
             - name: https
               containerPort: 8444

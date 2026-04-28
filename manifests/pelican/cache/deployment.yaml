@@ -36,6 +36,7 @@ spec:
       containers:
         - name: cache
           image: hub.opensciencegrid.org/pelican_platform/cache:{{ .Tag }}
+          imagePullPolicy: IfNotPresent
           ports:
             - name: https
               containerPort: 8444

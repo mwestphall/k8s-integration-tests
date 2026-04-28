@@ -21,6 +21,7 @@ spec:
       containers:
         - name: director
           image: hub.opensciencegrid.org/pelican_platform/director:{{ .Tag }}
+          imagePullPolicy: IfNotPresent
           ports:
             - name: https
               containerPort: 8444
