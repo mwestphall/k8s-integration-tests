@@ -18,6 +18,7 @@ spec:
         app.kubernetes.io/name: dev
         app.kubernetes.io/part-of: pelican
     spec:
+      enableServiceLinks: false
       containers:
         - name: dev
           image: hub.opensciencegrid.org/osgpreview/pelican-alpine:{{ .Tag }}

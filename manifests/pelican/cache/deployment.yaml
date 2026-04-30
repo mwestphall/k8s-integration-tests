@@ -23,6 +23,7 @@ spec:
         app.kubernetes.io/component: cache
         app.kubernetes.io/part-of: pelican
     spec:
+      enableServiceLinks: false
       initContainers:
         - name: wait-for-dependencies
           image: curlimages/curl:8.19.0
