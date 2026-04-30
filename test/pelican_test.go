@@ -18,6 +18,17 @@ var defaultFormatArgs pelicanFormatArgs = pelicanFormatArgs{
 	Tag: "v7.22.0",
 }
 
+// Define a struct to hold all setup components
+type PelicanTestSetup struct {
+	th                    TestHandle
+	logDir                string
+	cancelCtx             context.CancelFunc
+	secretsManifest       string
+	formattedKustomizeDir string
+	namespace             string
+	kubectlOptions        *k8s.KubectlOptions
+}
+
 // subtestGetDataFromOrigin checks that the Pelican CLI tools in the dev pod
 // can fetch data from the origin pod
 func subtestGetDataFromOrigin(th TestHandle) {
@@ -27,8 +38,9 @@ func subtestGetDataFromOrigin(th TestHandle) {
 	th.waitUntilPodExecSucceeds(devPod, "", cmd, TWO_MINUTES, zeroExitCode)
 }
 
-func TestPelican(t *testing.T) {
 
+
+func setupPelicanTestSpace(t *testing.T) *PelicanTestSetup {
 	// -----------------------
 	// Test environment setup
 	// -----------------------
@@ -63,18 +75,37 @@ func TestPelican(t *testing.T) {
 	formattedKustomizeDir := th.formatKustomizeDir(kustomizeDir, defaultFormatArgs)
 	k8s.KubectlApplyFromKustomize(t, options, formattedKustomizeDir)
 
+	return &PelicanTestSetup{
+		th:                    th,
+		logDir:                logDir,
+		cancelCtx:             cancelCtx,
+		secretsManifest:       secretsManifest,
+		formattedKustomizeDir: formattedKustomizeDir,
+		namespace:             namespace,
+		kubectlOptions:        options,
+	}
+}
+
+func cleanupPelicanTestSpace(t *testing.T, setup *PelicanTestSetup) {
+	setup.th.dumpPodInformation(setup.logDir)
+	setup.th.deletePelicanSecrets(setup.secretsManifest)
+	k8s.KubectlDeleteFromKustomize(t, setup.kubectlOptions, setup.formattedKustomizeDir)
+	k8s.DeleteNamespace(t, setup.kubectlOptions, setup.namespace)
+	setup.cancelCtx()
+	os.RemoveAll(setup.formattedKustomizeDir)
+}
+
+func TestPelican(t *testing.T) {
+
+	setup := setupPelicanTestSpace(t)
+
 	// --------------------------
 	// Test environment teardown
 	// --------------------------
 
 	// Cleanup runs all the reciporical functions that delete created resources
 	t.Cleanup(func() {
-		th.dumpPodInformation(logDir)
-		th.deletePelicanSecrets(secretsManifest)
-		k8s.KubectlDeleteFromKustomize(t, options, formattedKustomizeDir)
-		k8s.DeleteNamespace(t, options, namespace)
-		cancelCtx()
-		os.RemoveAll(formattedKustomizeDir)
+		cleanupPelicanTestSpace(t, setup)
 	})
 
 	// -------------
@@ -83,8 +114,7 @@ func TestPelican(t *testing.T) {
 
 	// First test: Confirm that the kustomized resources pass their liveness/health checks
 	t.Run("Confirm deployments become ready.", func(t *testing.T) {
-		th := TestHandle{t, options}
-		th.waitUntilAllDeploymentsReady(SIX_MINUTES)
+		setup.th.waitUntilAllDeploymentsReady(SIX_MINUTES)
 	})
 
 	if t.Failed() {
@@ -93,7 +123,8 @@ func TestPelican(t *testing.T) {
 
 	// Second test: Run a basic pelican object get
 	t.Run("Confirm public `pelican object get` succeeds", func(t *testing.T) {
-		th := TestHandle{t, options}
-		subtestGetDataFromOrigin(th)
+		subtestGetDataFromOrigin(setup.th)
 	})
+
+	
 }
