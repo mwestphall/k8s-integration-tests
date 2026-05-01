@@ -18,9 +18,9 @@ var defaultFormatArgs pelicanFormatArgs = pelicanFormatArgs{
 	Tag: "v7.22.0",
 }
 
-// Define a struct to hold all setup components
-type PelicanTestSetup struct {
-	th                    TestHandle
+// PelicanTestContext holds all setup components needed to run the Pelican tests, and provides a convenient way to pass them around
+type PelicanTestContext struct {
+	TestHandle
 	logDir                string
 	cancelCtx             context.CancelFunc
 	secretsManifest       string
@@ -40,7 +40,7 @@ func subtestGetDataFromOrigin(th TestHandle) {
 
 
 
-func setupPelicanTestSpace(t *testing.T) *PelicanTestSetup {
+func setupPelicanTestSpace(t *testing.T) *PelicanTestContext {
 	// -----------------------
 	// Test environment setup
 	// -----------------------
@@ -75,8 +75,8 @@ func setupPelicanTestSpace(t *testing.T) *PelicanTestSetup {
 	formattedKustomizeDir := th.formatKustomizeDir(kustomizeDir, defaultFormatArgs)
 	k8s.KubectlApplyFromKustomize(t, options, formattedKustomizeDir)
 
-	return &PelicanTestSetup{
-		th:                    th,
+	return &PelicanTestContext{
+		TestHandle:            th,
 		logDir:                logDir,
 		cancelCtx:             cancelCtx,
 		secretsManifest:       secretsManifest,
@@ -86,18 +86,18 @@ func setupPelicanTestSpace(t *testing.T) *PelicanTestSetup {
 	}
 }
 
-func cleanupPelicanTestSpace(t *testing.T, setup *PelicanTestSetup) {
-	setup.th.dumpPodInformation(setup.logDir)
-	setup.th.deletePelicanSecrets(setup.secretsManifest)
-	k8s.KubectlDeleteFromKustomize(t, setup.kubectlOptions, setup.formattedKustomizeDir)
-	k8s.DeleteNamespace(t, setup.kubectlOptions, setup.namespace)
+func cleanupPelicanTestSpace(setup *PelicanTestContext) {
+	setup.dumpPodInformation(setup.logDir)
+	setup.deletePelicanSecrets(setup.secretsManifest)
+	k8s.KubectlDeleteFromKustomize(setup.T, setup.kubectlOptions, setup.formattedKustomizeDir)
+	k8s.DeleteNamespace(setup.T, setup.kubectlOptions, setup.namespace)
 	setup.cancelCtx()
 	os.RemoveAll(setup.formattedKustomizeDir)
 }
 
 func TestPelican(t *testing.T) {
 
-	setup := setupPelicanTestSpace(t)
+	testContext := setupPelicanTestSpace(t)
 
 	// --------------------------
 	// Test environment teardown
@@ -105,7 +105,7 @@ func TestPelican(t *testing.T) {
 
 	// Cleanup runs all the reciporical functions that delete created resources
 	t.Cleanup(func() {
-		cleanupPelicanTestSpace(t, setup)
+		cleanupPelicanTestSpace(testContext)
 	})
 
 	// -------------
@@ -114,7 +114,7 @@ func TestPelican(t *testing.T) {
 
 	// First test: Confirm that the kustomized resources pass their liveness/health checks
 	t.Run("Confirm deployments become ready.", func(t *testing.T) {
-		setup.th.waitUntilAllDeploymentsReady(SIX_MINUTES)
+		testContext.waitUntilAllDeploymentsReady(SIX_MINUTES)
 	})
 
 	if t.Failed() {
@@ -123,7 +123,7 @@ func TestPelican(t *testing.T) {
 
 	// Second test: Run a basic pelican object get
 	t.Run("Confirm public `pelican object get` succeeds", func(t *testing.T) {
-		subtestGetDataFromOrigin(setup.th)
+		subtestGetDataFromOrigin(testContext.TestHandle)
 	})
 
 	
