@@ -23,10 +23,12 @@ spec:
         app.kubernetes.io/component: origin
         app.kubernetes.io/part-of: pelican
     spec:
+      enableServiceLinks: false
       initContainers:
         - name: wait-for-dependencies
           image: curlimages/curl:8.19.0
           command: ["sh", "/scripts/wait-for-url.sh"]
+          imagePullPolicy: IfNotPresent
           env:
             - name: WAIT_URLS
               value: https://director:8444/api/v1.0/health,https://registry:8444/api/v1.0/health
@@ -36,6 +38,7 @@ spec:
       containers:
         - name: origin
           image: hub.opensciencegrid.org/pelican_platform/origin:{{ .Tag }}
+          imagePullPolicy: IfNotPresent
           ports:
             - name: https
               containerPort: 8444

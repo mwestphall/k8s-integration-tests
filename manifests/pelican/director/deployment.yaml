@@ -18,9 +18,11 @@ spec:
         app.kubernetes.io/name: director
         app.kubernetes.io/part-of: pelican
     spec:
+      enableServiceLinks: false
       containers:
         - name: director
           image: hub.opensciencegrid.org/pelican_platform/director:{{ .Tag }}
+          imagePullPolicy: IfNotPresent
           ports:
             - name: https
               containerPort: 8444

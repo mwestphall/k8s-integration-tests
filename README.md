@@ -62,14 +62,18 @@ Each test suite has its own job in the workflow. After each job completes (wheth
 Run all tests:
 
 ```sh
-go test ./test/... -v
+go test ./test -v
 ```
 
 Run a specific test suite by name:
 
 ```sh
-go test ./test/... -v -run TestOSPoolEP
+go test ./test -v -run TestOSPoolEP
 ```
+```sh
+go test ./test -v -run TestPelican
+```
+
 
 ---
 
