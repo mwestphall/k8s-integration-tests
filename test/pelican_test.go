@@ -11,7 +11,9 @@ import (
 )
 
 type pelicanFormatArgs struct {
-	Tag string
+	Tag       string
+	CacheTag  string
+	OriginTag string
 }
 
 var defaultFormatArgs pelicanFormatArgs = pelicanFormatArgs{

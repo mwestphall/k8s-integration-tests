@@ -29,6 +29,8 @@ jobs:
     strategy:
       matrix:
         version: ['v7.22.0', 'v7.24.2']
+        cacheVersion: [ 'v7.22.0', 'v7.24.2' ]
+        originVersion: [ 'v7.22.0', 'v7.24.2' ]
     runs-on: ubuntu-22.04
     name: Run Pelican tests
     steps:
@@ -43,6 +45,8 @@ jobs:
     - name: 'Test Pelican version ${{ matrix.version }}'
       env:
         PELICAN_Tag: ${{ matrix.version }}
+        PELICAN_CacheTag: ${{ matrix.cacheVersion }}
+        PELICAN_OriginTag: ${{ matrix.originVersion }}
       run: go test ./test -v -count 1 -run TestPelican -timeout 15m
     - name: 'Upload Test Logs'
       uses: actions/upload-artifact@v4
