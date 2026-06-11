@@ -57,10 +57,10 @@ func main() {
 
 	matrix := versionMatrix{
 		CacheVersion:    versions,
-		OriginVersion:   versions,
-		RegistryVersion: versions,
-		DirectorVersion: versions,
-		ClientVersion:   versions,
+		OriginVersion:   versions[0:1],
+		RegistryVersion: versions[0:1],
+		DirectorVersion: versions[0:1],
+		ClientVersion:   versions[0:1],
 	}
 
 	out, err := json.Marshal(matrix)
