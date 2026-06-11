@@ -11,9 +11,11 @@ import (
 )
 
 type pelicanFormatArgs struct {
-	Tag       string
-	CacheTag  string
-	OriginTag string
+	Tag         string
+	CacheTag    string
+	OriginTag   string
+	DirectorTag string
+	RegistryTag string
 }
 
 var defaultFormatArgs pelicanFormatArgs = pelicanFormatArgs{
@@ -39,8 +41,6 @@ func subtestGetDataFromOrigin(th TestHandle) {
 	cmd := "pelican object get pelican://director:8444/public/data/0.0 /dev/null"
 	th.waitUntilPodExecSucceeds(devPod, "", cmd, TWO_MINUTES, zeroExitCode)
 }
-
-
 
 func setupPelicanTestSpace(t *testing.T) *PelicanTestContext {
 	// -----------------------
@@ -128,5 +128,4 @@ func TestPelican(t *testing.T) {
 		subtestGetDataFromOrigin(testContext.TestHandle)
 	})
 
-	
 }
