@@ -8,6 +8,7 @@ jobs:
     uses: ./.github/workflows/test-ospool-ep.yaml
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   pelican:
     uses: ./.github/workflows/test-pelican.yaml
     secrets: inherit
@@ -47,3 +48,8 @@ jobs:
         path: /tmp/k8s-tests
         retention-days: 5
 >>>>>>> 2938ac5 (fix trailing quote)
+=======
+  pelican:
+    uses: ./.github/workflows/test-pelican.yaml
+    secrets: inherit
+>>>>>>> 519b3c5 (Split test workflows out for easier debugging)
