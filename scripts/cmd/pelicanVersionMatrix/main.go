@@ -15,7 +15,7 @@ const (
 	owner          = "PelicanPlatform"
 	repo           = "pelican"
 	releasePattern = `^v\d+\.\d+\.\d+$`
-	rcPattern      = `^v\d+\.\d+\.\d+-rc\d+$`
+	rcPattern      = `^v\d+\.\d+\.\d+-rc\.\d+$`
 )
 
 // versionMatrix matches the GitHub Actions matrix format. Each field lists the

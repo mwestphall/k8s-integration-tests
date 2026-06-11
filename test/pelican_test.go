@@ -16,6 +16,7 @@ type pelicanFormatArgs struct {
 	OriginTag   string
 	DirectorTag string
 	RegistryTag string
+	ClientTag   string
 }
 
 var defaultFormatArgs pelicanFormatArgs = pelicanFormatArgs{

@@ -21,7 +21,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: dev
-          image: hub.opensciencegrid.org/osgpreview/pelican-alpine:{{ .Tag }}
+          image: hub.opensciencegrid.org/pelican_platform/client:{{ .ClientTag | default .Tag }}
           imagePullPolicy: IfNotPresent
           command: ["/bin/sleep", "infinity"]
           volumeMounts:
