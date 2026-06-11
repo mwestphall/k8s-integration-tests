@@ -60,7 +60,7 @@ jobs:
         sudo dpkg -i "${DEB_VERSION}"
     - name: 'Test Pelican'
       env:
-        PELICAN_ClientTag: ${{ matrix.clientVersion }}
+        PELICAN_ClientTag:  v7.26.0-rc.0 # client docker image not supported in versions prior to v7.26.0-rc.0
         PELICAN_CacheTag: ${{ matrix.cacheVersion }}
         PELICAN_OriginTag: ${{ matrix.originVersion }}
         PELICAN_RegistryTag: ${{ matrix.registryVersion }}
