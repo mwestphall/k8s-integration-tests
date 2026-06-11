@@ -1,0 +1,26 @@
+name: OSPool EP Tests
+on:
+  workflow_call:
+  workflow_dispatch:
+jobs:
+  test-ospool-ep:
+    strategy:
+      fail-fast: false
+      matrix:
+        cvmfs_type: ['Cvmfsexec', 'CvmfsBindMount']
+    runs-on: ubuntu-22.04
+    name: Run OSPool EP test
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v5
+    - name: Setup environment
+      uses: ./.github/actions/setup
+    - name: 'Test OSPool EP with ${{ matrix.cvmfs_type }}'
+      run: go test ./test -v -count 1 -run TestOSPoolEP${{ matrix.cvmfs_type }} -timeout 15m
+    - name: 'Upload Test Logs'
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ospool-ep-${{ matrix.cvmfs_type }}
+        path: /tmp/k8s-tests
+        retention-days: 5

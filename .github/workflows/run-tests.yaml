@@ -1,59 +1,12 @@
 name: Run K8s Integration Tests
 on:
-  workflow_dispatch: 
+  workflow_dispatch:
   schedule:
     - cron: '0 0 * * *'  # runs every day at midnight UTC
 jobs:
-  test-ospool-ep:
-    strategy:
-      fail-fast: false
-      matrix:
-        cvmfs_type: ['Cvmfsexec', 'CvmfsBindMount']
-    runs-on: ubuntu-22.04
-    name: Run OSPool EP test
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v5
-    - name: Setup environment
-      uses: ./.github/actions/setup
-    - name: 'Test OSPool EP with ${{ matrix.cvmfs_type }}'
-      run: go test ./test -v -count 1 -run TestOSPoolEP${{ matrix.cvmfs_type }} -timeout 15m
-    - name: 'Upload Test Logs'
-      if: always()
-      uses: actions/upload-artifact@v4
-      with:
-        name: ospool-ep-${{ matrix.cvmfs_type }}
-        path: /tmp/k8s-tests
-        retention-days: 5
-  
-  test-pelican:
-    strategy:
-      fail-fast: false
-      matrix:
-        version: ['v7.22.0', 'v7.24.2']
-        cacheVersion: [ 'v7.22.0', 'v7.24.2' ]
-        originVersion: [ 'v7.22.0', 'v7.24.2' ]
-    runs-on: ubuntu-22.04
-    name: Run Pelican tests
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v5
-    - name: Setup environment
-      uses: ./.github/actions/setup
-    - name: Install Pelican CLI
-      run: |
-          wget https://dl.pelicanplatform.org/7.24.2/pelican_7.24.2-1_amd64.deb
-          sudo dpkg -i pelican_7.24.2-1_amd64.deb
-    - name: 'Test Pelican version ${{ matrix.version }}'
-      env:
-        PELICAN_Tag: ${{ matrix.version }}
-        PELICAN_CacheTag: ${{ matrix.cacheVersion }}
-        PELICAN_OriginTag: ${{ matrix.originVersion }}
-      run: go test ./test -v -count 1 -run TestPelican -timeout 15m
-    - name: 'Upload Test Logs'
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: pelican-${{ matrix.version }}
-        path: /tmp/k8s-tests
-        retention-days: 5
+  ospool-ep:
+    uses: ./.github/workflows/test-ospool-ep.yaml
+
+  pelican:
+    uses: ./.github/workflows/test-pelican.yaml
+    secrets: inherit
