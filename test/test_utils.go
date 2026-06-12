@@ -83,11 +83,18 @@ func (th *TestHandle) waitUntilAllDeploymentsReady(retries Retry) {
 
 type EvalOutput func(string) bool
 
-// waitUntilPodExecSucceeds tries exec-ing a command in a pod until that command both returns a zero exit code and passes the provided
+// waitUntilPodExecSucceeds tries exec-ing a command via `sh -c` in a pod until that command both returns a zero exit code and passes the provided
 // evaluation expression. Used to poll for "readiness" of a service inside a container
 func (th *TestHandle) waitUntilPodExecSucceeds(podName string, containerName string, command string, retries Retry, evaluator EvalOutput) string {
+	shCmd := []string{"sh", "-c", command}
+	return th.waitUntilPodExecSucceedsSlice(podName, containerName, shCmd, retries, evaluator)
+}
+
+// waitUntilPodExecSucceedsSlice tries exec-ing a command in a pod until that command both returns a zero exit code and passes the provided
+// evaluation expression. Used to poll for "readiness" of a service inside a container
+func (th *TestHandle) waitUntilPodExecSucceedsSlice(podName string, containerName string, command []string, retries Retry, evaluator EvalOutput) string {
 	for range retries.retries {
-		res, err := k8s.ExecPodE(th.T, th.options, podName, containerName, "sh", "-c", command)
+		res, err := k8s.ExecPodE(th.T, th.options, podName, containerName, command...)
 		if err == nil && evaluator(res) {
 			return res
 		}

@@ -40,7 +40,7 @@ func subtestGetDataFromOrigin(th TestHandle) {
 	devPod := th.getPodNameByLabel("app.kubernetes.io/name=dev")
 	// Check that condor_status filtered on the EP's name returns a non-empty string
 	cmd := "pelican object get pelican://director:8444/public/data/0.0 /dev/null"
-	th.waitUntilPodExecSucceeds(devPod, "", cmd, TWO_MINUTES, zeroExitCode)
+	th.waitUntilPodExecSucceedsSlice(devPod, "", strings.Split(cmd, " "), TWO_MINUTES, zeroExitCode)
 }
 
 func setupPelicanTestSpace(t *testing.T) *PelicanTestContext {
