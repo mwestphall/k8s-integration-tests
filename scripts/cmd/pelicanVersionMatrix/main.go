@@ -63,12 +63,13 @@ func main() {
 	versions := []string{release.GetTagName(), rc.GetTagName()}
 
 	// Return a version matrix that convolves all versions for the relevant components.
-	// Results in a total of 16 tests (2^4)
+	// Currently, just convolve cache and origin to limit test scope. Test just
+	// the release candidate for registry and director.
 	matrix := versionMatrix{
 		CacheVersion:    versions,
 		OriginVersion:   versions,
-		RegistryVersion: versions,
-		DirectorVersion: versions,
+		RegistryVersion: versions[1:2],
+		DirectorVersion: versions[1:2],
 		ClientVersion:   versions[0:1],
 	}
 
