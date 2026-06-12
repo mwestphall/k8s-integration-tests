@@ -1,3 +1,6 @@
+// pelicanVersionMatrix generates a JSON matrix of Pelican versions for testing.
+// It fetches the latest stable release and the latest release candidate (RC) from GitHub,
+// and constructs a matrix that can be used in GitHub Actions to run tests against these versions.
 package main
 
 import (
@@ -28,6 +31,8 @@ type versionMatrix struct {
 	ClientVersion   []string `json:"clientVersion"`
 }
 
+// newGitHubClient creates a GitHub client, based on the `GITHUB_TOKEN` environment variable.
+// This is set by default inside GHAs.
 func newGitHubClient(ctx context.Context) *github.Client {
 	token := os.Getenv("GITHUB_TOKEN")
 	if token == "" {
@@ -41,12 +46,14 @@ func main() {
 	ctx := context.Background()
 	client := newGitHubClient(ctx)
 
+	// Find the latest stable release
 	release, err := util.LatestMatchingRelease(ctx, client, owner, repo, releasePattern)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error fetching latest release: %v\n", err)
 		os.Exit(1)
 	}
 
+	// Find the latest release candidate
 	rc, err := util.LatestMatchingRelease(ctx, client, owner, repo, rcPattern)
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error fetching latest RC: %v\n", err)
@@ -55,11 +62,13 @@ func main() {
 
 	versions := []string{release.GetTagName(), rc.GetTagName()}
 
+	// Return a version matrix that convolves all versions for the relevant components.
+	// Results in a total of 16 tests (2^4)
 	matrix := versionMatrix{
 		CacheVersion:    versions,
-		OriginVersion:   versions[0:1],
-		RegistryVersion: versions[0:1],
-		DirectorVersion: versions[0:1],
+		OriginVersion:   versions,
+		RegistryVersion: versions,
+		DirectorVersion: versions,
 		ClientVersion:   versions[0:1],
 	}
 
@@ -69,5 +78,6 @@ func main() {
 		os.Exit(1)
 	}
 
+	// Print matrix to stdout, which GHAs can capture and use to define test runs
 	fmt.Println(string(out))
 }

@@ -8,33 +8,23 @@ import (
 	"github.com/google/go-github/v68/github"
 )
 
-// LatestMatchingRelease returns the most recently created release in owner/repo
-// whose tag name matches pattern. Draft releases are skipped. Returns an error if
+// LatestMatchingRelease returns the most recently created release in `owner`/`repo`
+// whose tag name matches `pattern`. Draft releases are skipped. Returns an error if
 // no matching release is found on the first page of results or the pattern is invalid.
-//
-// The GitHub API returns releases newest-first, so the first non-draft match is
-// the latest.
-//
-// Pass a nil client to use an unauthenticated client (60 req/hr rate limit).
-// For CI use, construct an authenticated client via:
-//
-//	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-//	client := github.NewClient(oauth2.NewClient(ctx, ts))
 func LatestMatchingRelease(ctx context.Context, client *github.Client, owner, repo, pattern string) (*github.RepositoryRelease, error) {
+	// Confirm given tag regexp is valid
 	re, err := regexp.Compile(pattern)
 	if err != nil {
 		return nil, fmt.Errorf("invalid pattern %q: %w", pattern, err)
 	}
 
-	if client == nil {
-		client = github.NewClient(nil)
-	}
-
+	// Get the first page of releases (sorted by creation date descending)
 	releases, _, err := client.Repositories.ListReleases(ctx, owner, repo, &github.ListOptions{PerPage: 100})
 	if err != nil {
 		return nil, fmt.Errorf("listing releases for %s/%s: %w", owner, repo, err)
 	}
 
+	// Return the first releaes in the list that matches the given pattern
 	for _, r := range releases {
 		if !r.GetDraft() && re.MatchString(r.GetTagName()) {
 			return r, nil
