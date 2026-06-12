@@ -42,6 +42,11 @@ jobs:
       uses: actions/checkout@v5
     - name: Setup environment
       uses: ./.github/actions/setup
+    - name: Cache Pelican CLI
+      uses: actions/cache@v4
+      with:
+        path: /tmp/pelican-cache
+        key: pelican-cli-${{ matrix.clientVersion }}
     - name: Install Pelican CLI
       run: |
 <<<<<<< HEAD
@@ -56,8 +61,12 @@ jobs:
         VERSION="${{ matrix.clientVersion }}"
         VERSION="${VERSION#v}"
         DEB_VERSION=pelican_$(echo "$VERSION" | sed 's/-rc/.rc/')-1_amd64.deb
-        wget "https://dl.pelicanplatform.org/${VERSION}/${DEB_VERSION}"
-        sudo dpkg -i "${DEB_VERSION}"
+        CACHE_PATH="/tmp/pelican-cache/${DEB_VERSION}"
+        if [ ! -f "${CACHE_PATH}" ]; then
+          mkdir -p /tmp/pelican-cache
+          wget -O "${CACHE_PATH}" "https://dl.pelicanplatform.org/${VERSION}/${DEB_VERSION}"
+        fi
+        sudo dpkg -i "${CACHE_PATH}"
     - name: 'Test Pelican'
       env:
         PELICAN_ClientTag:  v7.26.0-rc.0 # client docker image not supported in versions prior to v7.26.0-rc.0

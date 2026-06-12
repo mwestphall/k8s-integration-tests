@@ -9,3 +9,5 @@ runs:
       uses: actions/setup-go@v6
       with:
         go-version: '1.26'
+        cache: true
+        cache-dependency-path: go.sum
