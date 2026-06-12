@@ -19,7 +19,7 @@ type pelicanFormatArgs struct {
 	ClientTag   string
 }
 
-var defaultFormatArgs pelicanFormatArgs = pelicanFormatArgs{
+var defaultPelicanFormatArgs pelicanFormatArgs = pelicanFormatArgs{
 	Tag: "v7.22.0",
 }
 
@@ -74,8 +74,8 @@ func setupPelicanTestSpace(t *testing.T) *PelicanTestContext {
 		"admin:$2y$10$ONeUS/VGwL9CoAD6pyZ2kusUjX8z0Sxuf8kz2g4PGbFb1GKUQ9J3C")
 
 	// Template the kustomize dir
-	th.fillTemplateStructFromEnv(&defaultFormatArgs, "PELICAN_")
-	formattedKustomizeDir := th.formatKustomizeDir(kustomizeDir, defaultFormatArgs)
+	th.fillTemplateStructFromEnv(&defaultPelicanFormatArgs, "PELICAN_")
+	formattedKustomizeDir := th.formatKustomizeDir(kustomizeDir, defaultPelicanFormatArgs)
 	k8s.KubectlApplyFromKustomize(t, options, formattedKustomizeDir)
 
 	return &PelicanTestContext{

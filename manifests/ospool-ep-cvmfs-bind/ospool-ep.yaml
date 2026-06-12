@@ -46,7 +46,7 @@ spec:
           value: 100%__htc/minimal:0
         - name: OSG_DEFAULT_CONTAINER_DISTRIBUTION_GPU
           value: 100%__htc/minimal:0
-        image: hub.opensciencegrid.org/osg-htc/ospool-ep:25-release
+        image: hub.opensciencegrid.org/osg-htc/ospool-ep:{{ .OSPoolEPTag }}
         imagePullPolicy: Always
         name: ospool-ep
         securityContext:

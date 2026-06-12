@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: test-cm
-        image: htcondor/cm
+        image: htcondor/cm:{{ .CMTag }}
         env:
         - name: _CONDOR_TRUST_DOMAIN
           value: test-cm

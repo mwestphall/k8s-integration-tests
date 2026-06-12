@@ -8,6 +8,11 @@ jobs:
       fail-fast: false
       matrix:
         cvmfs_type: ['Cvmfsexec', 'CvmfsBindMount']
+        include:
+          - ospoolEPVersion: 25-release
+            cmVersion: 25.0-el9
+          - ospoolEPVersion: 25-testing
+            cmVersion: 25.x-el9
     runs-on: ubuntu-22.04
     name: Run OSPool EP test
     steps:
@@ -16,6 +21,9 @@ jobs:
     - name: Setup environment
       uses: ./.github/actions/setup
     - name: 'Test OSPool EP with ${{ matrix.cvmfs_type }}'
+      env:
+        OSPOOL_EP_OSPoolEPTag: ${{ matrix.ospoolEPVersion }}
+        OSPOOL_EP_CMTag: ${{ matrix.cmVersion }}
       run: go test ./test -v -count 1 -run TestOSPoolEP${{ matrix.cvmfs_type }} -timeout 15m
     - name: 'Upload Test Logs'
       if: always()

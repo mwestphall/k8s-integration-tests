@@ -14,6 +14,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
+type ospoolEPFormatArgs struct {
+	OSPoolEPTag string
+	CMTag       string
+}
+
+var defaultOSPoolEPFormatArgs = ospoolEPFormatArgs{
+	OSPoolEPTag: "25-release",
+	CMTag:       "25.0-el9",
+}
+
 // Check that condor_status run against the CM lists the EP
 func subtestCondorStatus(th TestHandle) {
 	cmPod := th.getPodNameByLabel("app=test-cm")
@@ -75,8 +85,14 @@ func runOSPoolEPTests(t *testing.T, kustomizeDir string) {
 
 	// create the required credentials for cross-container communication in the test
 	tokenData := th.generatePoolPasswordAndIDToken("test-cm", "condor@test-cm", "pool-token")
+
+	// Template the kustomize dir
+	th.fillTemplateStructFromEnv(&defaultOSPoolEPFormatArgs, "OSPOOL_EP_")
+	formattedKustomizeDir := th.formatKustomizeDir(kustomizeDir, defaultPelicanFormatArgs)
+	k8s.KubectlApplyFromKustomize(t, options, formattedKustomizeDir)
+
 	// create k8s resources for the test
-	k8s.KubectlApplyFromKustomize(t, options, resourcePath)
+	k8s.KubectlApplyFromKustomize(t, options, formattedKustomizeDir)
 
 	// Create a directory for log output
 	logDir := th.makeLogDir(kustomizeDir)
