@@ -15,6 +15,7 @@ import (
 	"time"
 
 	"github.com/gruntwork-io/terratest/modules/k8s"
+	"github.com/gruntwork-io/terratest/modules/logger"
 	"github.com/stretchr/testify/require"
 	corev1 "k8s.io/api/core/v1"
 	v1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -166,8 +167,12 @@ func (th *TestHandle) dumpPodLogs(podName string, outputDir string) (err error) 
 		containers = append(containers, container.Name)
 	}
 
+	// Default k8s.GetPodLogsE is very noisy, so we create a copy of the options with a discard logger for dumping logs
+	quietOptions := *th.options
+	quietOptions.Logger = logger.Discard
+
 	for _, containerName := range containers {
-		logs, err2 := k8s.GetPodLogsE(th.T, th.options, pod, containerName)
+		logs, err2 := k8s.GetPodLogsE(th.T, &quietOptions, pod, containerName)
 		if err2 != nil {
 			return err2
 		}
