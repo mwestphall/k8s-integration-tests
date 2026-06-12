@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"reflect"
 
 	"github.com/google/go-github/v68/github"
 	"github.com/osg-htc/k8s-integration-tests/scripts/internal/util"
@@ -24,11 +25,15 @@ const (
 // versionMatrix matches the GitHub Actions matrix format. Each field lists the
 // versions to test; GHA expands them into a full cross-product of combinations.
 type versionMatrix struct {
-	CacheVersion    []string `json:"cacheVersion"`
-	OriginVersion   []string `json:"originVersion"`
-	RegistryVersion []string `json:"registryVersion"`
-	DirectorVersion []string `json:"directorVersion"`
-	ClientVersion   []string `json:"clientVersion"`
+	CacheVersion    string `json:"cacheVersion"`
+	OriginVersion   string `json:"originVersion"`
+	RegistryVersion string `json:"registryVersion"`
+	DirectorVersion string `json:"directorVersion"`
+	ClientVersion   string `json:"clientVersion"`
+}
+
+type versionIncluesMatrix struct {
+	Include []versionMatrix `json:"include"`
 }
 
 // newGitHubClient creates a GitHub client, based on the `GITHUB_TOKEN` environment variable.
@@ -40,6 +45,16 @@ func newGitHubClient(ctx context.Context) *github.Client {
 	}
 	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
 	return github.NewClient(oauth2.NewClient(ctx, ts))
+}
+
+func newVersionMatrix(baseTag string) versionMatrix {
+	return versionMatrix{
+		CacheVersion:    baseTag,
+		OriginVersion:   baseTag,
+		RegistryVersion: baseTag,
+		DirectorVersion: baseTag,
+		ClientVersion:   baseTag,
+	}
 }
 
 func main() {
@@ -60,20 +75,24 @@ func main() {
 		os.Exit(1)
 	}
 
-	versions := []string{release.GetTagName(), rc.GetTagName()}
+	relTag := release.GetTagName()
+	rcTag := rc.GetTagName()
 
-	// Return a version matrix that convolves all versions for the relevant components.
-	// Currently, just convolve cache and origin to limit test scope. Test just
-	// the release candidate for registry and director.
-	matrix := versionMatrix{
-		CacheVersion:    versions,
-		OriginVersion:   versions,
-		RegistryVersion: versions[1:2],
-		DirectorVersion: versions[1:2],
-		ClientVersion:   versions[0:1],
+	// Return a version matrix that convolves versions for the relevant components.
+	// Test sequence should be as follows:
+	// 1. Test the release candidate across all components
+	// 2. For each component, test the stable release of that component against other RCs to catch upgrade issues.
+	fields := reflect.VisibleFields(reflect.TypeFor[versionMatrix]())
+	includes := []versionMatrix{newVersionMatrix(rcTag)}
+	for _, field := range fields {
+		verMat := newVersionMatrix(rcTag)
+		refMat := reflect.ValueOf(&verMat).Elem()
+		refMat.FieldByName(field.Name).SetString(relTag)
+
+		includes = append(includes, verMat)
 	}
 
-	out, err := json.Marshal(matrix)
+	out, err := json.Marshal(versionIncluesMatrix{Include: includes})
 	if err != nil {
 		fmt.Fprintf(os.Stderr, "error marshaling matrix: %v\n", err)
 		os.Exit(1)
