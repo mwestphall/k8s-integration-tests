@@ -3,15 +3,6 @@ on:
   workflow_call:
   workflow_dispatch:
 jobs:
-<<<<<<< HEAD
-  test-pelican:
-    strategy:
-      fail-fast: false
-      matrix:
-        version: ['v7.22.0', 'v7.24.2']
-        cacheVersion: [ 'v7.22.0', 'v7.24.2' ]
-        originVersion: [ 'v7.22.0', 'v7.24.2' ]
-=======
   generate-pelican-matrix:
     runs-on: ubuntu-22.04
     outputs:
@@ -34,7 +25,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.generate-pelican-matrix.outputs.matrix) }}
->>>>>>> 519b3c5 (Split test workflows out for easier debugging)
     runs-on: ubuntu-22.04
     name: Run Pelican tests
     steps:
@@ -49,15 +39,6 @@ jobs:
         key: pelican-cli-${{ matrix.clientVersion }}
     - name: Install Pelican CLI
       run: |
-<<<<<<< HEAD
-          wget https://dl.pelicanplatform.org/7.24.2/pelican_7.24.2-1_amd64.deb
-          sudo dpkg -i pelican_7.24.2-1_amd64.deb
-    - name: 'Test Pelican version ${{ matrix.version }}'
-      env:
-        PELICAN_Tag: ${{ matrix.version }}
-        PELICAN_CacheTag: ${{ matrix.cacheVersion }}
-        PELICAN_OriginTag: ${{ matrix.originVersion }}
-=======
         VERSION="${{ matrix.clientVersion }}"
         VERSION="${VERSION#v}"
         DEB_VERSION=pelican_$(echo "$VERSION" | sed 's/-rc/.rc/')-1_amd64.deb
@@ -74,16 +55,11 @@ jobs:
         PELICAN_OriginTag: ${{ matrix.originVersion }}
         PELICAN_RegistryTag: ${{ matrix.registryVersion }}
         PELICAN_DirectorTag: ${{ matrix.directorVersion }}
->>>>>>> 519b3c5 (Split test workflows out for easier debugging)
       run: go test ./test -v -count 1 -run TestPelican -timeout 15m
     - name: 'Upload Test Logs'
       uses: actions/upload-artifact@v4
       if: always()
       with:
-<<<<<<< HEAD
-        name: pelican-${{ matrix.version }}
-=======
         name: pelican-${{ matrix.clientVersion }}-${{ matrix.cacheVersion }}-${{ matrix.originVersion }}-${{ matrix.registryVersion }}-${{ matrix.directorVersion }}
->>>>>>> 519b3c5 (Split test workflows out for easier debugging)
         path: /tmp/k8s-tests
         retention-days: 5

@@ -7,49 +7,6 @@ jobs:
   ospool-ep:
     uses: ./.github/workflows/test-ospool-ep.yaml
 
-<<<<<<< HEAD
-<<<<<<< HEAD
   pelican:
     uses: ./.github/workflows/test-pelican.yaml
     secrets: inherit
-=======
-  test-pelican:
-    needs: generate-pelican-matrix
-    strategy:
-      fail-fast: false
-      matrix: ${{ fromJSON(needs.generate-pelican-matrix.outputs.matrix) }}
-    runs-on: ubuntu-22.04
-    name: Run Pelican tests
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v5
-    - name: Setup environment
-      uses: ./.github/actions/setup
-    - name: Install Pelican CLI
-      run: |
-        VERSION="${{ matrix.clientVersion }}"
-        VERSION="${VERSION#v}"
-        DEB_VERSION=pelican_$(echo "$VERSION" | sed 's/-rc/.rc/')-1_amd64.deb
-        wget "https://dl.pelicanplatform.org/${VERSION}/${DEB_VERSION}"
-        sudo dpkg -i "${DEB_VERSION}"
-    - name: 'Test Pelican'
-      env:
-        PELICAN_ClientTag: ${{ matrix.clientVersion }}
-        PELICAN_CacheTag: ${{ matrix.cacheVersion }}
-        PELICAN_OriginTag: ${{ matrix.originVersion }}
-        PELICAN_RegistryTag: ${{ matrix.registryVersion }}
-        PELICAN_DirectorTag: ${{ matrix.directorVersion }}
-      run: go test ./test -v -count 1 -run TestPelican -timeout 15m
-    - name: 'Upload Test Logs'
-      uses: actions/upload-artifact@v4
-      if: always()
-      with:
-        name: pelican-${{ matrix.clientVersion }}-${{ matrix.cacheVersion }}-${{ matrix.originVersion }}-${{ matrix.registryVersion }}-${{ matrix.directorVersion }}
-        path: /tmp/k8s-tests
-        retention-days: 5
->>>>>>> 2938ac5 (fix trailing quote)
-=======
-  pelican:
-    uses: ./.github/workflows/test-pelican.yaml
-    secrets: inherit
->>>>>>> 519b3c5 (Split test workflows out for easier debugging)
