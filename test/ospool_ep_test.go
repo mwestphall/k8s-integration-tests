@@ -88,7 +88,7 @@ func runOSPoolEPTests(t *testing.T, kustomizeDir string) {
 
 	// Template the kustomize dir
 	th.fillTemplateStructFromEnv(&defaultOSPoolEPFormatArgs, "OSPOOL_EP_")
-	formattedKustomizeDir := th.formatKustomizeDir(kustomizeDir, defaultPelicanFormatArgs)
+	formattedKustomizeDir := th.formatKustomizeDir(kustomizeDir, defaultOSPoolEPFormatArgs)
 	k8s.KubectlApplyFromKustomize(t, options, formattedKustomizeDir)
 
 	// create k8s resources for the test
