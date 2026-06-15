@@ -5,9 +5,11 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"maps"
 	"net/http"
 	"os"
 	"path/filepath"
+	"slices"
 	"sort"
 	"strings"
 
@@ -51,20 +53,16 @@ func JobConclusion(job *github.WorkflowJob) string {
 // suite name to the jobs in that suite.
 func GroupJobsBySuite(jobs []*github.WorkflowJob) ([]SuiteStatus, map[string][]*github.WorkflowJob) {
 	suiteJobs := make(map[string][]*github.WorkflowJob)
-	var order []string
-	seen := make(map[string]bool)
 
 	for _, j := range jobs {
 		suite := JobSuite(j.GetName())
 		if suite == "" {
 			continue
 		}
-		if !seen[suite] {
-			seen[suite] = true
-			order = append(order, suite)
-		}
 		suiteJobs[suite] = append(suiteJobs[suite], j)
 	}
+
+	order := slices.Sorted(maps.Keys(suiteJobs))
 
 	statuses := make([]SuiteStatus, 0, len(order))
 	for _, suite := range order {
