@@ -1,0 +1,31 @@
+{{define "logs"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{.Container}} logs - K8s Integration Tests</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{{template "nav" .}}
+<main class="container container-wide">
+  <nav class="breadcrumb">
+    <a href="/">Runs</a> &rsaquo;
+    <a href="/runs/{{.RunID}}">Run #{{.RunID}}</a> &rsaquo;
+    <a href="/runs/{{.RunID}}/jobs/{{.JobID}}">{{.Job.GetName}}</a> &rsaquo;
+    {{.Pod}} / {{.Container}}
+  </nav>
+
+  <div class="run-header">
+    <h1>
+      <span class="log-pod">{{.Pod}}</span>
+      <span class="log-sep">/</span>
+      <span class="log-container">{{.Container}}</span>
+    </h1>
+  </div>
+
+  <pre class="log-pre">{{.Content}}</pre>
+</main>
+</body>
+</html>
+{{end}}

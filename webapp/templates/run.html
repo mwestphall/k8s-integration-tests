@@ -1,0 +1,59 @@
+{{define "run"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Run {{.Run.GetID}} - K8s Integration Tests</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{{template "nav" .}}
+<main class="container">
+  <nav class="breadcrumb">
+    <a href="/">Runs</a> &rsaquo; Run #{{.Run.GetID}}
+  </nav>
+
+  <div class="run-header">
+    <h1>Run #{{.Run.GetID}}</h1>
+    <div class="run-meta">
+      <span>{{formatTime .Run.GetCreatedAt}}</span>
+      <span class="badge {{statusClass .Run.GetConclusion}}">{{.Run.GetConclusion}}</span>
+      <a href="{{.Run.GetHTMLURL}}" target="_blank" rel="noopener" class="external-link">View on GitHub &nearr;</a>
+    </div>
+  </div>
+
+  {{range .Suites}}
+  <section class="suite-section">
+    <h2 class="suite-heading">
+      {{.Status.Name}}
+      <span class="suite-summary {{if eq .Status.Failure 0}}status-success{{else}}status-failure{{end}}">
+        {{.Status.Success}}/{{.Status.Total}} passed
+      </span>
+    </h2>
+    <table class="jobs-table">
+      <thead>
+        <tr>
+          <th>Job</th>
+          <th>Status</th>
+          <th>Details</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{range .Jobs}}
+        <tr>
+          <td class="job-name">{{.Job.GetName}}</td>
+          <td><span class="badge {{statusClass .Conclusion}}">{{.Conclusion}}</span></td>
+          <td>
+            <a href="/runs/{{$.Run.GetID}}/jobs/{{.Job.GetID}}">Details</a>
+            {{if .HasArtifact}}<span class="artifact-indicator" title="Artifact available">&#128190;</span>{{end}}
+          </td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </section>
+  {{end}}
+</main>
+</body>
+</html>
+{{end}}

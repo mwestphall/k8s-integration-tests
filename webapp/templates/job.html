@@ -1,0 +1,58 @@
+{{define "job"}}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>{{.Job.GetName}} - K8s Integration Tests</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+{{template "nav" .}}
+<main class="container">
+  <nav class="breadcrumb">
+    <a href="/">Runs</a> &rsaquo;
+    <a href="/runs/{{.RunID}}">Run #{{.RunID}}</a> &rsaquo;
+    Job #{{.JobID}}
+  </nav>
+
+  <div class="run-header">
+    <h1>{{.Job.GetName}}</h1>
+    <div class="run-meta">
+      <span class="badge {{statusClass .Conclusion}}">{{.Conclusion}}</span>
+      <a href="{{.Job.GetHTMLURL}}" target="_blank" rel="noopener" class="external-link">View on GitHub &nearr;</a>
+    </div>
+  </div>
+
+  {{if not .Pods}}
+    <p class="empty">No artifact available for this job.</p>
+  {{else}}
+  <h2>Pods</h2>
+  {{range .Pods}}
+  {{$pod := .Name}}
+  <section class="pod-section">
+    <h3 class="pod-heading">{{.Name}}</h3>
+
+    {{if .Events}}
+    <details class="events-details">
+      <summary>Pod Events</summary>
+      <pre class="events-pre">{{.Events}}</pre>
+    </details>
+    {{else}}
+    <p class="empty">No events recorded.</p>
+    {{end}}
+
+    {{if .Containers}}
+    <div class="container-links">
+      <strong>Container Logs:</strong>
+      {{range .Containers}}
+      <a href="/runs/{{$.RunID}}/jobs/{{$.JobID}}/logs/{{$pod}}/{{.}}" class="container-link">{{.}}</a>
+      {{end}}
+    </div>
+    {{end}}
+  </section>
+  {{end}}
+  {{end}}
+</main>
+</body>
+</html>
+{{end}}
