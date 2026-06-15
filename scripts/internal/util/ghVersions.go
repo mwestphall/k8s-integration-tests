@@ -3,9 +3,11 @@ package util
 import (
 	"context"
 	"fmt"
+	"os"
 	"regexp"
 
 	"github.com/google/go-github/v68/github"
+	"golang.org/x/oauth2"
 )
 
 // LatestMatchingRelease returns the most recently created release in `owner`/`repo`
@@ -32,4 +34,15 @@ func LatestMatchingRelease(ctx context.Context, client *github.Client, owner, re
 	}
 
 	return nil, fmt.Errorf("no release matching %q found in %s/%s", pattern, owner, repo)
+}
+
+// newGitHubClient creates a GitHub client, based on the `GITHUB_TOKEN` environment variable.
+// This is set by default inside GHAs.
+func NewGitHubClient(ctx context.Context) *github.Client {
+	token := os.Getenv("GITHUB_TOKEN")
+	if token == "" {
+		return github.NewClient(nil)
+	}
+	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
+	return github.NewClient(oauth2.NewClient(ctx, ts))
 }

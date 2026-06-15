@@ -10,9 +10,7 @@ import (
 	"os"
 	"reflect"
 
-	"github.com/google/go-github/v68/github"
 	"github.com/osg-htc/k8s-integration-tests/scripts/internal/util"
-	"golang.org/x/oauth2"
 )
 
 const (
@@ -36,17 +34,6 @@ type versionIncluesMatrix struct {
 	Include []versionMatrix `json:"include"`
 }
 
-// newGitHubClient creates a GitHub client, based on the `GITHUB_TOKEN` environment variable.
-// This is set by default inside GHAs.
-func newGitHubClient(ctx context.Context) *github.Client {
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		return github.NewClient(nil)
-	}
-	ts := oauth2.StaticTokenSource(&oauth2.Token{AccessToken: token})
-	return github.NewClient(oauth2.NewClient(ctx, ts))
-}
-
 func newVersionMatrix(baseTag string) versionMatrix {
 	return versionMatrix{
 		CacheVersion:    baseTag,
@@ -59,7 +46,7 @@ func newVersionMatrix(baseTag string) versionMatrix {
 
 func main() {
 	ctx := context.Background()
-	client := newGitHubClient(ctx)
+	client := util.NewGitHubClient(ctx)
 
 	// Find the latest stable release
 	release, err := util.LatestMatchingRelease(ctx, client, owner, repo, releasePattern)
