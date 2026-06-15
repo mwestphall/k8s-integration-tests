@@ -8,6 +8,7 @@ jobs:
       fail-fast: false
       matrix:
         cvmfs_type: ['Cvmfsexec', 'CvmfsBindMount']
+        ospoolEPVersion: ['25-release', '25-testing']
         include:
           - ospoolEPVersion: 25-release
             cmVersion: 25.0-el9
