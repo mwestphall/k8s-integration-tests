@@ -10,8 +10,6 @@ import (
 
 	"github.com/gruntwork-io/terratest/modules/k8s"
 	"github.com/gruntwork-io/terratest/modules/random"
-
-	"github.com/stretchr/testify/require"
 )
 
 type ospoolEPFormatArgs struct {
@@ -67,9 +65,8 @@ func mkCvmfsMountDir(t *testing.T) string {
 
 // runOSPoolEPTests runs the set of OSPool EP tests against the EP configuration defined
 // in the given kustomizeDir
-func runOSPoolEPTests(t *testing.T, kustomizeDir string) {
-	resourcePath, err := filepath.Abs(kustomizeDir)
-	require.NoError(t, err)
+func runOSPoolEPTests(t *testing.T, kustomizeSubDir string) {
+	kustomizeBaseDir := "../manifests/ospool-ep"
 
 	namespace := "test-ospool-ep-" + strings.ToLower(random.UniqueId())
 	options := k8s.NewKubectlOptions("", "", namespace)
@@ -88,11 +85,11 @@ func runOSPoolEPTests(t *testing.T, kustomizeDir string) {
 
 	// Template the kustomize dir
 	th.fillTemplateStructFromEnv(&defaultOSPoolEPFormatArgs, "OSPOOL_EP_")
-	formattedKustomizeDir := th.formatKustomizeDir(kustomizeDir, defaultOSPoolEPFormatArgs)
-	k8s.KubectlApplyFromKustomize(t, options, formattedKustomizeDir)
+	formattedKustomizeDir := th.formatKustomizeDir(kustomizeBaseDir, defaultOSPoolEPFormatArgs)
 
+	kustomizeDir := filepath.Join(formattedKustomizeDir, kustomizeSubDir)
 	// create k8s resources for the test
-	k8s.KubectlApplyFromKustomize(t, options, formattedKustomizeDir)
+	k8s.KubectlApplyFromKustomize(t, options, kustomizeDir)
 
 	// Create a directory for log output
 	logDir := th.makeLogDir(kustomizeDir)
@@ -103,7 +100,7 @@ func runOSPoolEPTests(t *testing.T, kustomizeDir string) {
 		cancelCtx()
 		k8s.DeleteNamespace(t, options, namespace)
 		th.deletePoolPasswordAndIDToken(tokenData)
-		k8s.KubectlDeleteFromKustomize(t, options, resourcePath)
+		k8s.KubectlDeleteFromKustomize(t, options, kustomizeDir)
 		os.RemoveAll(cvmfsDir)
 	})
 
@@ -138,12 +135,12 @@ func runOSPoolEPTests(t *testing.T, kustomizeDir string) {
 // with CVMFSExec
 func TestOSPoolEPCvmfsexec(t *testing.T) {
 	t.Parallel()
-	runOSPoolEPTests(t, "../manifests/ospool-ep-cvmfsexec")
+	runOSPoolEPTests(t, "cvmfsexec")
 }
 
 // TestOSPoolEPCvmfsexec is an entrypoint test for testing an EP configured
 // with CVMFS bind mounts
 func TestOSPoolEPCvmfsBindMount(t *testing.T) {
 	t.Parallel()
-	runOSPoolEPTests(t, "../manifests/ospool-ep-cvmfs-bind")
+	runOSPoolEPTests(t, "cvmfs-bind")
 }

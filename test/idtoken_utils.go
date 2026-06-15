@@ -48,7 +48,7 @@ func (th *TestHandle) generatePoolPasswordAndIDToken(trustDomain string, identit
 	// Generate a random POOL password
 	passwd := randomPoolPassword(16)
 	// Create a new K8s template based on the selected tokenOptions and Pool password
-	passwdManifest := applyTemplate(th.T, "../manifests/util/generate-idtoken.yaml", map[string]string{
+	passwdManifest := applyTemplate(th.T, "../manifests/util/ospool-ep-idtokens/generate-idtoken.yaml", map[string]string{
 		"trustDomain":  trustDomain,
 		"poolPassword": passwd,
 	})
@@ -69,7 +69,7 @@ func (th *TestHandle) generatePoolPasswordAndIDToken(trustDomain string, identit
 		"-authz", "ADVERTISE_MASTER",
 		"-identity", identity)
 
-	tokenManifest := applyTemplate(th.T, "../manifests/util/idtoken.yaml", map[string]string{
+	tokenManifest := applyTemplate(th.T, "../manifests/util/ospool-ep-idtokens/idtoken.yaml", map[string]string{
 		"name":  secretName,
 		"token": token,
 	})

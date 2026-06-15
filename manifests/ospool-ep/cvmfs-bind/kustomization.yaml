@@ -1,0 +1,4 @@
+resources:
+   - ../base/cvmfs-daemonset
+   - ../base/cm
+   - ospool-ep.yaml
