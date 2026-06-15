@@ -20,7 +20,7 @@ jobs:
       uses: actions/checkout@v5
     - name: Setup environment
       uses: ./.github/actions/setup
-    - name: 'Test OSPool EP with ${{ matrix.cvmfs_type }}'
+    - name: 'Test OSPool EP with ${{ matrix.cvmfs_type }}, ${{ matrix.ospoolEPVersion }}, ${{ matrix.cmVersion }}'
       env:
         OSPOOL_EP_OSPoolEPTag: ${{ matrix.ospoolEPVersion }}
         OSPOOL_EP_CMTag: ${{ matrix.cmVersion }}
@@ -29,6 +29,6 @@ jobs:
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: ospool-ep-${{ matrix.cvmfs_type }}
+        name: ospool-ep-${{ matrix.cvmfs_type }}-${{ matrix.ospoolEPVersion }}-${{ matrix.cmVersion }}
         path: /tmp/k8s-tests
         retention-days: 5
