@@ -14,35 +14,13 @@ jobs:
             cmVersion: 25.0-el9
           - ospoolEPVersion: 25-testing
             cmVersion: 25.x-el9
-    runs-on: ubuntu-22.04
     name: Run OSPool EP test
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v5
-    # Populate metadata into the step name for display on the web UI
-    - id: serialize-matrix
-      uses: ./.github/actions/serialize-matrix
-    - name: 'Job Matrix: ${{ steps.serialize-matrix.outputs.matrixJson }}'
-      shell: bash
-      run: 'true'
-      
-    # Actual test contents
-    - name: Setup environment
-      uses: ./.github/actions/setup
-    - name: 'Test OSPool EP with ${{ matrix.cvmfsType }}, ${{ matrix.ospoolEPVersion }}, ${{ matrix.cmVersion }}'
-      env:
-        OSPOOL_EP_OSPoolEPTag: ${{ matrix.ospoolEPVersion }}
-        OSPOOL_EP_CMTag: ${{ matrix.cmVersion }}
-        OSPOOL_EP_CvmfsType: ${{ matrix.cvmfsType }}
-      run: go test ./test -v -count 1 -run TestOSPoolEP -timeout 15m
-      
-    # Upload artifacts after the fact, named such that they can be correlated to the test run using the hash
-    - id: make-artifact-hash
-      if: always()
-      uses: ./.github/actions/make-artifact-hash
-    - name: Upload Test Logs for ${{ steps.make-artifact-hash.outputs.HASH }}
-      if: always()
-      uses: ./.github/actions/upload-artifacts-by-hash
-      with:
-        prefix: ospool-ep
-        hash: ${{ steps.make-artifact-hash.outputs.HASH }}
+    uses: ./.github/workflows/test-harness.yaml
+    with:
+      testName: TestOSPoolEP
+      testEnv: |
+        {
+          "OSPOOL_EP_OSPoolEPTag": "${{ matrix.ospoolEPVersion }}"
+          "OSPOOL_EP_CMTag": "${{ matrix.cmVersion }}"
+          "OSPOOL_EP_CvmfsType": "${{ matrix.cvmfsType }}"
+        }
