@@ -20,7 +20,7 @@ jobs:
       testName: TestOSPoolEP
       testEnv: |
         {
-          "OSPOOL_EP_OSPoolEPTag": "${{ matrix.ospoolEPVersion }}"
-          "OSPOOL_EP_CMTag": "${{ matrix.cmVersion }}"
+          "OSPOOL_EP_OSPoolEPTag": "${{ matrix.ospoolEPVersion }}",
+          "OSPOOL_EP_CMTag": "${{ matrix.cmVersion }}",
           "OSPOOL_EP_CvmfsType": "${{ matrix.cvmfsType }}"
         }
