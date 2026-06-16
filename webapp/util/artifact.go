@@ -262,8 +262,8 @@ func ParsePodFiles(dir string) ([]PodDetail, error) {
 			}
 			ensure(podName).events = string(data)
 
-		case strings.HasSuffix(name, ".logs"):
-			base := strings.TrimSuffix(name, ".logs")
+		case strings.HasSuffix(name, ".log"):
+			base := strings.TrimSuffix(name, ".log")
 			idx := strings.LastIndex(base, "_")
 			if idx < 0 {
 				continue

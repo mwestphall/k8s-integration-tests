@@ -268,7 +268,7 @@ func (a *App) handleLogs(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	logFile := filepath.Join(dir, fmt.Sprintf("%s_%s.logs", pod, container))
+	logFile := filepath.Join(dir, fmt.Sprintf("%s_%s.log", pod, container))
 	content, err := os.ReadFile(logFile)
 	if err != nil {
 		a.httpError(w, fmt.Errorf("reading log file: %w", err), http.StatusNotFound)

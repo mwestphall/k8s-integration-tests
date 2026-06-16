@@ -47,16 +47,13 @@ Views
 3. **Test Details View**: For a specific test job:
     * Link to the Github Actions page of that test. 
     * Include a per-Pod overview of the test results, populated via the artifacts produced for that job.
-      **Artifact-to-job correlation**: Job names from the GitHub API take the form
-      `<suite> / <display name> (<key>=<value>, <key>=<value>, ...)`. Artifact names take the form
-      `<suite>-<value1>-<value2>-...`. To match an artifact to a job: (1) confirm the artifact name
-      starts with the suite prefix (the part of the job name before ` / `), then (2) extract the
-      matrix parameter values from the parenthesized portion of the job name and verify that every
-      value appears as a hyphen-delimited token in the artifact name. The first artifact satisfying
-      both conditions is used.
+      **Artifact-to-job correlation**: Each job includes a step named
+      `Upload Test Logs for <hash>`. Artifacts are named `<suite>-<hash>`. To match an artifact
+      to a job, extract the hash from that step name and perform an exact match against the artifact
+      named `<suite>-<hash>`, where `<suite>` is the part of the job name before ` / `.
       The artifact for each job is a zip file containing the following files for each pod that was tested:
         * `<pod-name>.events`: The list of Kubernetes events that occured for that pod during the test run.
-        * `<pod-name>_<container-name>.logs`: The logs for the container in that pod during the test run.
+        * `<pod-name>_<container-name>.log`: The logs for the container in that pod during the test run.
       Note that each test may have multiple pods, and each pod may have multiple containers, so the number of files in the artifact is not fixed. 
       The web viewer should be able to handle this dynamic structure when displaying the results. Also note that the test results place the zip file artifacts
       into a variable top-level directory inside the zip file, which will need to be examined during runtime.
