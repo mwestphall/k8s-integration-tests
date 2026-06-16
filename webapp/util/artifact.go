@@ -84,46 +84,30 @@ func GroupJobsBySuite(jobs []*github.WorkflowJob) ([]SuiteStatus, map[string][]*
 
 // MatchArtifactToJob finds the artifact corresponding to the given job.
 //
-// Job names take the form "<suite> / <display name> (<key>=<value>, ...)".
-// Artifact names take the form "<suite>-<value1>-<value2>-...".
-// Matching: confirm the artifact name starts with the suite prefix, then verify
-// every matrix value from the job name's parenthesised section appears in the
-// artifact name's suffix.
+// Each job has a step named "Upload Test Logs for <hash>". Artifacts are named
+// "<suite>-<hash>". The hash is extracted from the step name and combined with
+// the suite prefix to form the expected artifact name for an exact match.
 func MatchArtifactToJob(job *github.WorkflowJob, artifacts []*github.Artifact) *github.Artifact {
-	jobName := job.GetName()
-
-	parts := strings.SplitN(jobName, " / ", 2)
-	if len(parts) != 2 {
+	const stepPrefix = "Upload Test Logs for "
+	var hash string
+	for _, step := range job.Steps {
+		if strings.HasPrefix(step.GetName(), stepPrefix) {
+			hash = strings.TrimPrefix(step.GetName(), stepPrefix)
+			break
+		}
+	}
+	if hash == "" {
 		return nil
 	}
-	suite := strings.TrimSpace(parts[0])
-	rest := strings.TrimSpace(parts[1])
 
-	var matrixValues []string
-	if parenIdx := strings.Index(rest, "("); parenIdx >= 0 && strings.HasSuffix(rest, ")") {
-		matrixPart := rest[parenIdx+1 : len(rest)-1]
-		for _, kv := range strings.Split(matrixPart, ", ") {
-			if eqIdx := strings.Index(kv, "="); eqIdx >= 0 {
-				matrixValues = append(matrixValues, strings.TrimSpace(kv[eqIdx+1:]))
-			}
-		}
+	suite := JobSuite(job.GetName())
+	if suite == "" {
+		return nil
 	}
 
-	prefix := suite + "-"
+	target := suite + "-" + hash
 	for _, artifact := range artifacts {
-		name := artifact.GetName()
-		if !strings.HasPrefix(name, prefix) {
-			continue
-		}
-		suffix := name[len(suite):]
-		allMatch := true
-		for _, v := range matrixValues {
-			if !strings.Contains(suffix, v) {
-				allMatch = false
-				break
-			}
-		}
-		if allMatch {
+		if artifact.GetName() == target {
 			return artifact
 		}
 	}
