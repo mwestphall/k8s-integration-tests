@@ -10,12 +10,12 @@ on:
         description: 'The Environment to use for the test, encoded as a JSON string'
         type: string
         required: true
-      setupAction:
-        description: 'Setup action to run before the test, via a `uses` directive'
+      setupScript:
+        description: 'Setup script to run before the test'
         type: string
         required: false
-      setupInput:
-        description: 'Inputs to the setup action, encoded as a JSON string'
+      setupEnv:
+        description: 'Environment of the setup script, encoded as a JSON string'
         type: string
         required: false
 
@@ -48,10 +48,11 @@ jobs:
         cache: true
         cache-dependency-path: go.sum
 
-    - name: Setup Action
-      if: ${{ inputs.setupAction != '' }}
-      uses: ${{ inputs.setupAction }}
-      with: ${{ fromJSON(inputs.setupInput) }}  
+    - name: Test Setup Scripts
+      if: ${{ inputs.setupScript != '' }}
+      shell: bash
+      env: ${{ fromJSON(inputs.setupEnv) }}  
+      run: ${{ inputs.setupScript }}
       
     - name: 'Test ${{ inputs.testName }}'
       env: ${{ fromJSON(inputs.testEnv) }}
