@@ -12,7 +12,7 @@ runs:
   steps:
     - name: Record artifact input matrix
       env:
-        JOB_MATRIX: ${{ matrix }}
+        JOB_MATRIX: "${{ toJSON(matrix) }}"
       shell: bash
       run: |
         mkdir -p /tmp/k8s-tests
