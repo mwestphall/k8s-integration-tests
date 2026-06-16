@@ -7,7 +7,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        cvmfs_type: ['Cvmfsexec', 'CvmfsBindMount']
+        cvmfsType: ['cvmfsexec', 'cvmfs-bind']
         ospoolEPVersion: ['25-release', '25-testing']
         include:
           - ospoolEPVersion: 25-release
@@ -21,15 +21,16 @@ jobs:
       uses: actions/checkout@v5
     - name: Setup environment
       uses: ./.github/actions/setup
-    - name: 'Test OSPool EP with ${{ matrix.cvmfs_type }}, ${{ matrix.ospoolEPVersion }}, ${{ matrix.cmVersion }}'
+    - name: 'Test OSPool EP with ${{ matrix.cvmfsType }}, ${{ matrix.ospoolEPVersion }}, ${{ matrix.cmVersion }}'
       env:
         OSPOOL_EP_OSPoolEPTag: ${{ matrix.ospoolEPVersion }}
         OSPOOL_EP_CMTag: ${{ matrix.cmVersion }}
-      run: go test ./test -v -count 1 -run TestOSPoolEP${{ matrix.cvmfs_type }} -timeout 15m
+        OSPOOL_EP_CvmfsType: ${{ matrix.cvmfsType }}
+      run: go test ./test -v -count 1 -run TestOSPoolEP -timeout 15m
     - name: 'Upload Test Logs'
       if: always()
       uses: actions/upload-artifact@v4
       with:
-        name: ospool-ep-${{ matrix.cvmfs_type }}-${{ matrix.ospoolEPVersion }}-${{ matrix.cmVersion }}
+        name: ospool-ep-${{ matrix.cvmfsType }}-${{ matrix.ospoolEPVersion }}-${{ matrix.cmVersion }}
         path: /tmp/k8s-tests
         retention-days: 5

@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 
@@ -15,11 +14,13 @@ import (
 type ospoolEPFormatArgs struct {
 	OSPoolEPTag string
 	CMTag       string
+	CvmfsType   string
 }
 
 var defaultOSPoolEPFormatArgs = ospoolEPFormatArgs{
 	OSPoolEPTag: "25-release",
 	CMTag:       "25.0-el9",
+	CvmfsType:   "cvmfsexec",
 }
 
 // Check that condor_status run against the CM lists the EP
@@ -64,13 +65,18 @@ func mkCvmfsMountDir(t *testing.T) string {
 }
 
 // runOSPoolEPTests runs the set of OSPool EP tests against the EP configuration defined
-// in the given kustomizeDir
-func runOSPoolEPTests(t *testing.T, kustomizeSubDir string) {
-	kustomizeBaseDir := "../manifests/ospool-ep"
+// in the given kustomizeDir. Note that the `CvmfsType` config var will point the test
+// at one of two kustomization directories with different CVMFS mount styles.
+func TestOSPoolEP(t *testing.T) {
+	t.Parallel()
+	kustomizeDir := "../manifests/ospool-ep"
 
 	namespace := "test-ospool-ep-" + strings.ToLower(random.UniqueId())
 	options := k8s.NewKubectlOptions("", "", namespace)
 	th := TestHandle{t, options}
+
+	// Create a directory for log output
+	logDir := th.makeLogDir(kustomizeDir)
 
 	// create k8s namespaces for the test
 	k8s.CreateNamespace(t, options, namespace)
@@ -85,14 +91,10 @@ func runOSPoolEPTests(t *testing.T, kustomizeSubDir string) {
 
 	// Template the kustomize dir
 	th.fillTemplateStructFromEnv(&defaultOSPoolEPFormatArgs, "OSPOOL_EP_")
-	formattedKustomizeDir := th.formatKustomizeDir(kustomizeBaseDir, defaultOSPoolEPFormatArgs)
+	formattedKustomizeDir := th.formatKustomizeDir(kustomizeDir, defaultOSPoolEPFormatArgs)
 
-	kustomizeDir := filepath.Join(formattedKustomizeDir, kustomizeSubDir)
 	// create k8s resources for the test
-	k8s.KubectlApplyFromKustomize(t, options, kustomizeDir)
-
-	// Create a directory for log output
-	logDir := th.makeLogDir(kustomizeDir)
+	k8s.KubectlApplyFromKustomize(t, options, formattedKustomizeDir)
 
 	// defer deleting the k8s resources created for the test
 	t.Cleanup(func() {
@@ -100,7 +102,7 @@ func runOSPoolEPTests(t *testing.T, kustomizeSubDir string) {
 		cancelCtx()
 		k8s.DeleteNamespace(t, options, namespace)
 		th.deletePoolPasswordAndIDToken(tokenData)
-		k8s.KubectlDeleteFromKustomize(t, options, kustomizeDir)
+		k8s.KubectlDeleteFromKustomize(t, options, formattedKustomizeDir)
 		os.RemoveAll(cvmfsDir)
 	})
 
@@ -129,18 +131,4 @@ func runOSPoolEPTests(t *testing.T, kustomizeSubDir string) {
 		subtestHasCVMFS(TestHandle{t, options})
 	})
 
-}
-
-// TestOSPoolEPCvmfsexec is an entrypoint test for testing an EP configured
-// with CVMFSExec
-func TestOSPoolEPCvmfsexec(t *testing.T) {
-	t.Parallel()
-	runOSPoolEPTests(t, "cvmfsexec")
-}
-
-// TestOSPoolEPCvmfsexec is an entrypoint test for testing an EP configured
-// with CVMFS bind mounts
-func TestOSPoolEPCvmfsBindMount(t *testing.T) {
-	t.Parallel()
-	runOSPoolEPTests(t, "cvmfs-bind")
 }
