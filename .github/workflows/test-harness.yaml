@@ -7,7 +7,7 @@ on:
         type: string
         required: true
       testEnv: 
-        description: 'The matrix to use for the test, as a JSON string'
+        description: 'The Environment to use for the test, encoded as a JSON string'
         type: string
         required: true
 
@@ -18,27 +18,45 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v5
+
     # Populate metadata into the step name for display on the web UI
-    - id: serialize-matrix
-      uses: ./.github/actions/serialize-matrix
-    - name: 'Job Matrix: ${{ steps.serialize-matrix.outputs.matrixJson }}'
+    - id: serialize-env
+      env:
+        TEST_ENV: ${{ inputs.testEnv }}
+      shell: bash
+      run: echo "TEST_ENV=$(echo -n "$TEST_ENV" | tr '\n' ' ' | sed 's/\s\+/ /g')" >> $GITHUB_OUTPUT
+    - name: 'Job Matrix: ${{ steps.serialize-env.outputs.TEST_ENV }}'
       shell: bash
       run: 'true'
       
     # Actual test contents
-    - name: Setup environment
-      uses: ./.github/actions/setup
+    - name: Start minikube
+      uses: medyagh/setup-minikube@latest
+      
+    - name: Install Go
+      uses: actions/setup-go@v6
+      with:
+        go-version: '1.26'
+        cache: true
+        cache-dependency-path: go.sum
+
     - name: 'Test ${{ inputs.testName }} with ${{ steps.serialize-matrix.outputs.matrixJson }}'
       env: ${{ fromJSON(inputs.testEnv) }}
       run: go test ./test -v -count 1 -run ${{ inputs.testName }} -timeout 15m
       
-    # Upload artifacts after the fact, named such that they can be correlated to the test run using the hash
-    - id: make-artifact-hash
+    # Upload artifacts after the fact, named such that they can be correlated to the test run using the hash of the test environment
+    - name: Create Test Env Hash
       if: always()
-      uses: ./.github/actions/make-artifact-hash
-    - name: Upload Test Logs for ${{ steps.make-artifact-hash.outputs.HASH }}
+      id: create-testenv-hash
+      env:
+        TEST_ENV: ${{ inputs.testEnv }}
+      shell: bash
+      run: echo "HASH=$(echo -n "$TEST_ENV" | sha256sum | cut -d ' ' -f 1)" >> $GITHUB_OUTPUT
+      
+    - name: Upload Test Logs of ${{ steps.create-testenv-hash.outputs.HASH }}
       if: always()
-      uses: ./.github/actions/upload-artifacts-by-hash
+      uses: actions/upload-artifact@v4
       with:
-        prefix: ospool-ep
-        hash: ${{ steps.make-artifact-hash.outputs.HASH }}
+        name: ${{ inputs.testName }}-${{ steps.create-testenv-hash.outputs.HASH }}
+        path: /tmp/k8s-tests
+        retention-days: 5

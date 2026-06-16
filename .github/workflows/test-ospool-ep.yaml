@@ -4,6 +4,7 @@ on:
   workflow_dispatch:
 jobs:
   test-ospool-ep:
+    name: Run OSPool EP test
     strategy:
       fail-fast: false
       matrix:
@@ -14,7 +15,6 @@ jobs:
             cmVersion: 25.0-el9
           - ospoolEPVersion: 25-testing
             cmVersion: 25.x-el9
-    name: Run OSPool EP test
     uses: ./.github/workflows/test-harness.yaml
     with:
       testName: TestOSPoolEP
