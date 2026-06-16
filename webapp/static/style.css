@@ -122,6 +122,27 @@ h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
 .count-failure { color: #cf222e; }
 .count-pending { color: #9a6700; }
 
+/* ── Matrix chips (job details + run table) ── */
+.matrix-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 8px;
+}
+.matrix-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  background: #f6f8fa;
+  border: 1px solid #d0d7de;
+  border-radius: 4px;
+  padding: 2px 8px;
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 11px;
+}
+.matrix-key { color: #656d76; }
+.matrix-val { color: #24292f; font-weight: 600; }
+
 /* ── Run details page ── */
 .suite-section {
   background: #fff;
@@ -162,7 +183,7 @@ h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
 .jobs-table tr:last-child td { border-bottom: none; }
 .jobs-table tr:hover td { background: #f6f8fa; }
 
-.job-name { font-family: "SFMono-Regular", Consolas, monospace; font-size: 12px; }
+.job-name { font-size: 13px; }
 .artifact-indicator { margin-left: 6px; }
 
 .jobs-table a { color: #0969da; text-decoration: none; }

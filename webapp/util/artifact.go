@@ -3,6 +3,7 @@ package util
 import (
 	"archive/zip"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"maps"
@@ -32,12 +33,63 @@ type SuiteStatus struct {
 	Total   int
 }
 
+// MatrixEntry is a single key-value pair from a job's matrix environment.
+type MatrixEntry struct {
+	Key   string
+	Value string
+}
+
 // JobSuite extracts the suite prefix from a job name ("suite / rest" → "suite").
 func JobSuite(jobName string) string {
-	if idx := strings.Index(jobName, " / "); idx >= 0 {
-		return strings.TrimSpace(jobName[:idx])
+	if strings.Contains(jobName, " / ") {
+		return strings.Split(jobName, " / ")[0]
 	}
 	return ""
+}
+
+// JobDisplayName returns the human-readable test name from a job name.
+//
+// Job names take the form "<suite> / <display name> / Run Tests [(...)]".
+// This function returns the middle segment (e.g. "Run Pelican tests").
+func JobDisplayName(jobName string) string {
+	parts := strings.Split(jobName, " / ")
+	if len(parts) >= 2 {
+		// Fallback for old-format names: strip any trailing " (...)" matrix suffix.
+		name := strings.TrimSpace(parts[1])
+		if idx := strings.Index(name, " ("); idx >= 0 {
+			name = strings.TrimSpace(name[:idx])
+		}
+		return name
+	}
+	return jobName
+}
+
+// ParseJobMatrix parses the "Job Matrix: <json>" step name and returns the
+// key-value pairs sorted alphabetically by key.
+func ParseJobMatrix(steps []*github.TaskStep) []MatrixEntry {
+	const prefix = "Job Matrix: "
+	for _, step := range steps {
+		name := step.GetName()
+		if !strings.HasPrefix(name, prefix) {
+			continue
+		}
+		var m map[string]string
+		if err := json.Unmarshal([]byte(strings.TrimPrefix(name, prefix)), &m); err != nil {
+			return nil
+		}
+		keys := slices.Sorted(maps.Keys(m))
+		entries := make([]MatrixEntry, 0, len(keys))
+		for _, k := range keys {
+			displayKey := k
+			if strings.Contains(k, "_") {
+				keyParts := strings.Split(k, "_")
+				displayKey = keyParts[len(keyParts)-1]
+			}
+			entries = append(entries, MatrixEntry{Key: displayKey, Value: m[k]})
+		}
+		return entries
+	}
+	return nil
 }
 
 // JobConclusion returns a display-ready status string for a job.
@@ -85,10 +137,10 @@ func GroupJobsBySuite(jobs []*github.WorkflowJob) ([]SuiteStatus, map[string][]*
 // MatchArtifactToJob finds the artifact corresponding to the given job.
 //
 // Each job has a step named "Upload Test Logs for <hash>". Artifacts are named
-// "<suite>-<hash>". The hash is extracted from the step name and combined with
-// the suite prefix to form the expected artifact name for an exact match.
+// "<anything>-<hash>". The hash is extracted from the step name and matched
+// against the artifact name suffix; the prefix is no longer suite-specific.
 func MatchArtifactToJob(job *github.WorkflowJob, artifacts []*github.Artifact) *github.Artifact {
-	const stepPrefix = "Upload Test Logs for "
+	const stepPrefix = "Upload Test Logs of "
 	var hash string
 	for _, step := range job.Steps {
 		if strings.HasPrefix(step.GetName(), stepPrefix) {
@@ -100,14 +152,9 @@ func MatchArtifactToJob(job *github.WorkflowJob, artifacts []*github.Artifact) *
 		return nil
 	}
 
-	suite := JobSuite(job.GetName())
-	if suite == "" {
-		return nil
-	}
-
-	target := suite + "-" + hash
+	hashSuffix := "-" + hash
 	for _, artifact := range artifacts {
-		if artifact.GetName() == target {
+		if strings.HasSuffix(artifact.GetName(), hashSuffix) {
 			return artifact
 		}
 	}

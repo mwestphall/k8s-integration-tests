@@ -143,6 +143,8 @@ func (a *App) handleRun(w http.ResponseWriter, r *http.Request) {
 		Job         *github.WorkflowJob
 		HasArtifact bool
 		Conclusion  string
+		DisplayName string
+		Matrix      []util.MatrixEntry
 	}
 	type suiteRow struct {
 		Status util.SuiteStatus
@@ -157,6 +159,8 @@ func (a *App) handleRun(w http.ResponseWriter, r *http.Request) {
 				Job:         j,
 				HasArtifact: util.MatchArtifactToJob(j, artifactsResp.Artifacts) != nil,
 				Conclusion:  util.JobConclusion(j),
+				DisplayName: util.JobDisplayName(j.GetName()),
+				Matrix:      util.ParseJobMatrix(j.Steps),
 			})
 		}
 		suiteRows = append(suiteRows, suiteRow{Status: ss, Jobs: jrows})
@@ -197,11 +201,13 @@ func (a *App) handleJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	data := map[string]any{
-		"RunID":      runID,
-		"JobID":      jobID,
-		"Job":        job,
-		"Conclusion": util.JobConclusion(job),
-		"Pods":       nil,
+		"RunID":       runID,
+		"JobID":       jobID,
+		"Job":         job,
+		"Conclusion":  util.JobConclusion(job),
+		"DisplayName": util.JobDisplayName(job.GetName()),
+		"Matrix":      util.ParseJobMatrix(job.Steps),
+		"Pods":        nil,
 	}
 
 	artifact := util.MatchArtifactToJob(job, artifactsResp.Artifacts)
@@ -276,12 +282,13 @@ func (a *App) handleLogs(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "logs", map[string]any{
-		"RunID":      runID,
-		"JobID":      jobID,
-		"Job":        job,
-		"Pod":        pod,
-		"Container":  container,
-		"Content":    string(content),
-		"Conclusion": util.JobConclusion(job),
+		"RunID":       runID,
+		"JobID":       jobID,
+		"Job":         job,
+		"Pod":         pod,
+		"Container":   container,
+		"Content":     string(content),
+		"Conclusion":  util.JobConclusion(job),
+		"DisplayName": util.JobDisplayName(job.GetName()),
 	})
 }

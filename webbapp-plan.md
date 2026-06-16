@@ -33,7 +33,8 @@ Test Structure
 Tests are organized in GitHub Action workflows, with a single "Do Everything" workflow at `.github/workflows/run-tests.yaml` acting
 as the Entrypoint to other tests. When enumerating actions in the repo to display, only this "Do Everything" test should be considered.
 Within the "Do Everything" workflow, there are multiple jobs, each representing a different test suite (currently, 'ospool-ep' and 'pelican').
-In a given run, jobs are named `<test suite> / <test name>`, and should be grouped by `test suite` in the web viewer.
+In a given run, jobs are named `<test suite> / <test name> / Run Tests`, and should be grouped by `test suite` in the web viewer.
+Each job also contains a step named `Job Matrix: <json-encoded environment>` whose name encodes the key-value pairs for that matrix combination.
 
 
 Views
@@ -43,14 +44,17 @@ Views
     grouped by test suite. Each run should be clickable, leading to a detailed view of that run. No pagination is required.
 2. **Run Details Page**: For a specific run, display the status of each test suite (set of jobs with the same prefix), and the status of each individual test (job).
     A suite's status is "success" only if every job in the suite succeeded; otherwise it is "failure".
+    Each job is displayed using its human-readable test name (the middle segment of the job name, e.g. "Run Pelican tests"),
+    with its matrix key-value pairs shown as chips beneath the name.
     Clicking into a test should link to a detailed view of that test.
 3. **Test Details View**: For a specific test job:
-    * Link to the Github Actions page of that test. 
+    * Display the human-readable test name as the page title, with the matrix key-value pairs shown as chips beneath it.
+    * Link to the Github Actions page of that test.
     * Include a per-Pod overview of the test results, populated via the artifacts produced for that job.
       **Artifact-to-job correlation**: Each job includes a step named
-      `Upload Test Logs for <hash>`. Artifacts are named `<suite>-<hash>`. To match an artifact
-      to a job, extract the hash from that step name and perform an exact match against the artifact
-      named `<suite>-<hash>`, where `<suite>` is the part of the job name before ` / `.
+      `Upload Test Logs of <hash>`. Artifacts are named `<anything>-<hash>`. To match an artifact
+      to a job, extract the hash from that step name and find the artifact whose name ends with
+      `-<hash>`. The artifact name prefix is not tied to the suite name.
       The artifact for each job is a zip file containing the following files for each pod that was tested:
         * `<pod-name>.events`: The list of Kubernetes events that occured for that pod during the test run.
         * `<pod-name>_<container-name>.log`: The logs for the container in that pod during the test run.

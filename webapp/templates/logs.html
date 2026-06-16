@@ -12,7 +12,7 @@
   <nav class="breadcrumb">
     <a href="/">Runs</a> &rsaquo;
     <a href="/runs/{{.RunID}}">Run #{{.RunID}}</a> &rsaquo;
-    <a href="/runs/{{.RunID}}/jobs/{{.JobID}}">{{.Job.GetName}}</a> &rsaquo;
+    <a href="/runs/{{.RunID}}/jobs/{{.JobID}}">{{.DisplayName}}</a> &rsaquo;
     {{.Pod}} / {{.Container}}
   </nav>
 

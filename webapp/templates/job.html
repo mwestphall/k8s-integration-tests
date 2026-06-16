@@ -3,7 +3,7 @@
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>{{.Job.GetName}} - K8s Integration Tests</title>
+  <title>{{.DisplayName}} - K8s Integration Tests</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -16,7 +16,12 @@
   </nav>
 
   <div class="run-header">
-    <h1>{{.Job.GetName}}</h1>
+    <h1>{{.DisplayName}}</h1>
+    {{if .Matrix}}
+    <div class="matrix-chips">
+      {{range .Matrix}}<span class="matrix-chip"><span class="matrix-key">{{.Key}}</span>=<span class="matrix-val">{{.Value}}</span></span>{{end}}
+    </div>
+    {{end}}
     <div class="run-meta">
       <span class="badge {{statusClass .Conclusion}}">{{.Conclusion}}</span>
       <a href="{{.Job.GetHTMLURL}}" target="_blank" rel="noopener" class="external-link">View on GitHub &nearr;</a>
