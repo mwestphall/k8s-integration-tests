@@ -2,6 +2,9 @@ name: Pelican Tests
 on:
   workflow_call:
   workflow_dispatch:
+  push:
+    branches:
+      - feature/test-web-view
 jobs:
   generate-pelican-matrix:
     runs-on: ubuntu-22.04
@@ -21,48 +24,24 @@ jobs:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   test-pelican:
+    name: Run Pelican tests
     needs: generate-pelican-matrix
     strategy:
       fail-fast: false
       matrix: ${{ fromJSON(needs.generate-pelican-matrix.outputs.matrix) }}
-    runs-on: ubuntu-22.04
-    name: Run Pelican tests
-    steps:
-    - name: Checkout
-      uses: actions/checkout@v5
-    - name: Setup environment
-      uses: ./.github/actions/setup
-    - name: Cache Pelican CLI
-      uses: actions/cache@v4
-      with:
-        path: /tmp/pelican-cache
-        key: pelican-cli-${{ matrix.clientVersion }}
-    - name: Install Pelican CLI
-      run: |
-        VERSION="${{ matrix.clientVersion }}"
-        VERSION="${VERSION#v}"
-        DEB_VERSION=pelican_$(echo "$VERSION" | sed 's/-rc/.rc/')-1_amd64.deb
-        CACHE_PATH="/tmp/pelican-cache/${DEB_VERSION}"
-        if [ ! -f "${CACHE_PATH}" ]; then
-          mkdir -p /tmp/pelican-cache
-          wget -O "${CACHE_PATH}" "https://dl.pelicanplatform.org/${VERSION}/${DEB_VERSION}"
-        fi
-        sudo dpkg -i "${CACHE_PATH}"
-    - name: 'Test Pelican'
-      env:
-        PELICAN_ClientTag:  v7.26.0-rc.0 # client docker image not supported in versions prior to v7.26.0-rc.0
-        PELICAN_CacheTag: ${{ matrix.cacheVersion }}
-        PELICAN_OriginTag: ${{ matrix.originVersion }}
-        PELICAN_RegistryTag: ${{ matrix.registryVersion }}
-        PELICAN_DirectorTag: ${{ matrix.directorVersion }}
-      run: go test ./test -v -count 1 -run TestPelican -timeout 15m
-    # Upload artifacts after the fact, named such that they can be correlated to the test run using the hash
-    - id: make-artifact-hash
-      if: always()
-      uses: ./.github/actions/make-artifact-hash
-    - name: Upload Test Logs for ${{ steps.make-artifact-hash.outputs.HASH }}
-      if: always()
-      uses: ./.github/actions/upload-artifacts-by-hash
-      with:
-        prefix: pelican
-        hash: ${{ steps.make-artifact-hash.outputs.HASH }}
+    uses: ./.github/workflows/test-harness.yaml
+    with:
+      testName: TestPelican
+      testEnv: |
+        {
+          "PELICAN_ClientTag":  "v7.26.0-rc.0",
+          "PELICAN_CacheTag": "${{ matrix.cacheVersion }}",
+          "PELICAN_OriginTag": "${{ matrix.originVersion }}",
+          "PELICAN_RegistryTag": "${{ matrix.registryVersion }}",
+          "PELICAN_DirectorTag": "${{ matrix.directorVersion }}"
+        }
+      setupAction: ./.github/actions/installPelican
+      setupInput: |
+        {
+          "clientVersion": "v7.26.0-rc.0"
+        }

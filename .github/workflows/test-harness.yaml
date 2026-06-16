@@ -10,11 +10,19 @@ on:
         description: 'The Environment to use for the test, encoded as a JSON string'
         type: string
         required: true
+      setupAction:
+        description: 'Setup action to run before the test, via a `uses` directive'
+        type: string
+        required: false
+      setupInput:
+        description: 'Inputs to the setup action, encoded as a JSON string'
+        type: string
+        required: false
 
 jobs:
   run-tests:
     runs-on: ubuntu-22.04
-    name: Run ${{ inputs.testName }}
+    name: Run Tests
     steps:
     - name: Checkout
       uses: actions/checkout@v5
@@ -40,7 +48,12 @@ jobs:
         cache: true
         cache-dependency-path: go.sum
 
-    - name: 'Test ${{ inputs.testName }} with ${{ steps.serialize-matrix.outputs.matrixJson }}'
+    - name: Setup Action
+      if: ${{ inputs.setupAction != '' }}
+      uses: ${{ inputs.setupAction }}
+      with: ${{ fromJSON(inputs.setupInput) }}  
+      
+    - name: 'Test ${{ inputs.testName }}'
       env: ${{ fromJSON(inputs.testEnv) }}
       run: go test ./test -v -count 1 -run ${{ inputs.testName }} -timeout 15m
       

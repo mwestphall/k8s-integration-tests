@@ -1,0 +1,26 @@
+name: 'Install Pelican CLI'
+description: 'Install the Pelican CLI'
+inputs:
+  clientVersion:
+    description: 'The version of the Pelican CLI to install, e.g. "v25.0.0"'
+    required: true
+runs:
+  using: composite
+  steps:
+  - name: Install Pelican CLI
+    shell: bash
+    run: |
+      VERSION="${{ inputs.clientVersion }}"
+      VERSION="${VERSION#v}"
+      DEB_VERSION=pelican_$(echo "$VERSION" | sed 's/-rc/.rc/')-1_amd64.deb
+      CACHE_PATH="/tmp/pelican-cache/${DEB_VERSION}"
+      if [ ! -f "${CACHE_PATH}" ]; then
+        mkdir -p /tmp/pelican-cache
+        wget -O "${CACHE_PATH}" "https://dl.pelicanplatform.org/${VERSION}/${DEB_VERSION}"
+      fi
+      sudo dpkg -i "${CACHE_PATH}"
+  - name: Cache Pelican CLI
+    uses: actions/cache@v4
+    with:
+      path: /tmp/pelican-cache
+      key: pelican-cli-${{ inputs.clientVersion }}
