@@ -10,6 +10,14 @@ inputs:
 runs:
   using: composite
   steps:
+    - name: Record artifact input matrix
+      env:
+        JOB_MATRIX: ${{ matrix }}
+      shell: bash
+      run: |
+        mkdir -p /tmp/k8s-tests
+        echo "$JOB_MATRIX" > /tmp/k8s-tests/matrix.json
+    
     - name: Upload Artifact
       if: always()
       uses: actions/upload-artifact@v4
