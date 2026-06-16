@@ -102,7 +102,7 @@ func TestOSPoolEP(t *testing.T) {
 		cancelCtx()
 		k8s.DeleteNamespace(t, options, namespace)
 		th.deletePoolPasswordAndIDToken(tokenData)
-		k8s.KubectlDeleteFromKustomize(t, options, kustomizeDir)
+		k8s.KubectlDeleteFromKustomize(t, options, formattedKustomizeDir)
 		os.RemoveAll(cvmfsDir)
 	})
 
