@@ -30,16 +30,13 @@ jobs:
       run: |
         mkdir -p /tmp/k8s-tests
         echo "(Not) Running OSPool EP tests with cvmfsType=${{ matrix.cvmfsType }}, ospoolEPVersion=${{ matrix.ospoolEPVersion }}, cmVersion=${{ matrix.cmVersion }}" > /tmp/k8s-tests/test.log
-    - name: Create Matrix Hash
-      id: create-matrix-hash
-      env:
-        MATRIX: ${{ toJson(matrix) }}
-      shell: bash
-      run: echo "HASH=$(echo -n "$MATRIX" | sha256sum | cut -d ' ' -f 1)" >> $GITHUB_OUTPUT
-    - name: Upload Test Logs for ${{ steps.create-matrix-hash.outputs.HASH }}
+    # Upload artifacts after the fact, named such that they can be correlated to the test run using the hash
+    - id: make-artifact-hash
       if: always()
-      uses: actions/upload-artifact@v4
+      uses: ./.github/actions/make-artifact-hash
+    - name: Upload Test Logs for ${{ steps.make-artifact-hash.outputs.HASH }}
+      if: always()
+      uses: ./.github/actions/upload-artifacts-by-hash
       with:
-        name: ${{ inputs.name }}-${{ steps.create-matrix-hash.outputs.HASH }}
-        path: /tmp/k8s-tests
-        retention-days: 5
+        prefix: ospool-ep
+        hash: ${{ steps.make-artifact-hash.outputs.HASH }}

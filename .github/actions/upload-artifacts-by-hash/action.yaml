@@ -1,0 +1,19 @@
+name: 'Upload Artifacts By Hash'
+description: 'Upload test artifacts using a hash for correlation to job ID'
+inputs:
+  hash:
+    description: 'The hash of the matrix'
+    required: true
+  prefix:
+    description: 'A prefix to add to the artifact name'
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: Upload Artifact
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.prefix }}-${{ inputs.hash }}
+        path: /tmp/k8s-tests
+        retention-days: 5
