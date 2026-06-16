@@ -19,6 +19,14 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v5
+    # Populate metadata into the step name for display on the web UI
+    - id: serialize-matrix
+      uses: ./.github/actions/serialize-matrix
+    - name: 'Job Matrix: ${{ steps.serialize-matrix.outputs.matrixJson }}'
+      shell: bash
+      run: 'true'
+      
+    # Actual test contents
     - name: Setup environment
       uses: ./.github/actions/setup
     - name: 'Test OSPool EP with ${{ matrix.cvmfsType }}, ${{ matrix.ospoolEPVersion }}, ${{ matrix.cmVersion }}'
@@ -27,6 +35,7 @@ jobs:
         OSPOOL_EP_CMTag: ${{ matrix.cmVersion }}
         OSPOOL_EP_CvmfsType: ${{ matrix.cvmfsType }}
       run: go test ./test -v -count 1 -run TestOSPoolEP -timeout 15m
+      
     # Upload artifacts after the fact, named such that they can be correlated to the test run using the hash
     - id: make-artifact-hash
       if: always()
