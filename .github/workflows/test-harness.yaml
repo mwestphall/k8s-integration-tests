@@ -18,6 +18,7 @@ on:
         description: 'Environment of the setup script, encoded as a JSON string'
         type: string
         required: false
+        default: '{}'
 
 jobs:
   run-tests:
