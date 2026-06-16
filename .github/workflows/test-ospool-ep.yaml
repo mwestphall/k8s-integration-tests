@@ -19,17 +19,19 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v5
-    - name: Setup environment
-      uses: ./.github/actions/setup
+    #- name: Setup environment
+    #  uses: ./.github/actions/setup
     - name: 'Test OSPool EP with ${{ matrix.cvmfsType }}, ${{ matrix.ospoolEPVersion }}, ${{ matrix.cmVersion }}'
       env:
         OSPOOL_EP_OSPoolEPTag: ${{ matrix.ospoolEPVersion }}
         OSPOOL_EP_CMTag: ${{ matrix.cmVersion }}
         OSPOOL_EP_CvmfsType: ${{ matrix.cvmfsType }}
       # run: go test ./test -v -count 1 -run TestOSPoolEP -timeout 15m
-      run: echo "(Not) Running OSPool EP tests with cvmfsType=${{ matrix.cvmfsType }}, ospoolEPVersion=${{ matrix.ospoolEPVersion }}, cmVersion=${{ matrix.cmVersion }}" > /tmp/k8s-tests/test.log
+      run: |
+        mkdir -p /tmp/k8s-tests
+        echo "(Not) Running OSPool EP tests with cvmfsType=${{ matrix.cvmfsType }}, ospoolEPVersion=${{ matrix.ospoolEPVersion }}, cmVersion=${{ matrix.cmVersion }}" > /tmp/k8s-tests/test.log
     - name: 'Upload Test Logs'
       if: always()
-      uses: ./.github/actions/setup
+      uses: ./.github/actions/upload-artifacts
       with:
         name: ospool-ep-${{ matrix.cvmfsType }}-${{ matrix.ospoolEPVersion }}-${{ matrix.cmVersion }}
