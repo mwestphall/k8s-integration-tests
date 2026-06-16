@@ -56,10 +56,13 @@ jobs:
         PELICAN_RegistryTag: ${{ matrix.registryVersion }}
         PELICAN_DirectorTag: ${{ matrix.directorVersion }}
       run: go test ./test -v -count 1 -run TestPelican -timeout 15m
-    - name: 'Upload Test Logs'
-      uses: actions/upload-artifact@v4
+    # Upload artifacts after the fact, named such that they can be correlated to the test run using the hash
+    - id: make-artifact-hash
       if: always()
+      uses: ./.github/actions/make-artifact-hash
+    - name: Upload Test Logs for ${{ steps.make-artifact-hash.outputs.HASH }}
+      if: always()
+      uses: ./.github/actions/upload-artifacts-by-hash
       with:
-        name: pelican-${{ matrix.clientVersion }}-${{ matrix.cacheVersion }}-${{ matrix.originVersion }}-${{ matrix.registryVersion }}-${{ matrix.directorVersion }}
-        path: /tmp/k8s-tests
-        retention-days: 5
+        prefix: pelican
+        hash: ${{ steps.make-artifact-hash.outputs.HASH }}
