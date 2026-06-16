@@ -2,9 +2,6 @@ name: Pelican Tests
 on:
   workflow_call:
   workflow_dispatch:
-  push:
-    branches:
-      - feature/test-web-view
 jobs:
   generate-pelican-matrix:
     runs-on: ubuntu-22.04
