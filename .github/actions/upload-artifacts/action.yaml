@@ -1,0 +1,21 @@
+name: 'Upload Artifacts'
+description: 'Upload test artifacts in a way that they can be correlated back to their test run'
+inputs:
+  name:
+    description: 'The name of the artifact to upload'
+    required: true
+runs:
+  using: composite
+  steps:
+    - name: create-matrix-hash
+      env:
+        MATRIX: ${{ toJson(matrix) }}
+      shell: bash
+      run: echo "HASH=$(echo -n "$MATRIX" | sha256sum | cut -d ' ' -f 1)" >> $GITHUB_OUTPUT
+    - name: Upload Artifacts for ${{ steps.create-matrix-hash.outputs.HASH }}
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: ${{ inputs.name }}-${{ steps.create-matrix-hash.outputs.HASH }}
+        path: /tmp/k8s-tests
+        retention-days: 5
