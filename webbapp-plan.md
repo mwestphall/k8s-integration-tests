@@ -62,6 +62,12 @@ Views
       The web viewer should be able to handle this dynamic structure when displaying the results. Also note that the test results place the zip file artifacts
       into a variable top-level directory inside the zip file, which will need to be examined during runtime.
     * The name of each pod and its pod events should be shown in the Test Details View, and a link to the logs for each container in that pod should be provided. 
+    * A test result summary, derived from the logs of the test, should be shown at the top of the page.
+      * For jobs containing a step named `Test <Test Name>`, the logs for that test will contain several lines in the format `--- (PASS|FAIL): <Test Name> (test duration)`.
+      * If a job contains the appropriate step, fetch its logs via the GitHub API and parse these lines to determine the pass/fail status of each test, and display a summary
+        at the top of the page showing a table of the passing and failing tests.
+      * Cache the tests' logs as they're downloaded.
+    
       
 4. **Logs View**: For a specific container in a specific pod for a specific test, display the logs for that container as plain preformatted text (inside a `<pre>` element).
 
