@@ -215,8 +215,8 @@ h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
   padding: 12px;
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 12px;
-  overflow-x: auto;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
   max-height: 400px;
   overflow-y: auto;
   margin-top: 6px;
@@ -304,9 +304,14 @@ h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
   font-family: "SFMono-Regular", Consolas, monospace;
   font-size: 12px;
   line-height: 1.6;
-  overflow-x: auto;
-  white-space: pre;
+  white-space: pre-wrap;
+  overflow-wrap: break-word;
   margin-top: 16px;
+}
+.log-line {
+  display: block;
+  padding-left: 2em;
+  text-indent: -2em;
 }
 
 /* ── Misc ── */

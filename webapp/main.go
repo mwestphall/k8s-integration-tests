@@ -8,7 +8,9 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
+	"strings"
 
 	"github.com/google/go-github/v68/github"
 	"github.com/osg-htc/k8s-integration-tests/webapp/handlers"
@@ -59,6 +61,12 @@ func main() {
 		},
 		"jobConclusion": util.JobConclusion,
 		"add":           func(a, b int) int { return a + b },
+		"isSubTest": func(name string) bool { return strings.Contains(name, "/") },
+		"urlQuery":  url.QueryEscape,
+		"logLines": func(s string) []string {
+			s = strings.ReplaceAll(s, "\r\n", "\n")
+			return strings.Split(s, "\n")
+		},
 	}
 
 	tmpl := template.Must(

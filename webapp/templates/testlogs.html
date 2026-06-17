@@ -1,9 +1,9 @@
-{{define "logs"}}
+{{define "testlogs"}}
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="utf-8">
-  <title>{{.Container}} logs - K8s Integration Tests</title>
+  <title>{{if .TestName}}{{.TestName}}{{else}}All Test Logs{{end}} - K8s Integration Tests</title>
   <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -13,15 +13,11 @@
     <a href="/">Runs</a> &rsaquo;
     <a href="/runs/{{.RunID}}">Run #{{.RunID}}</a> &rsaquo;
     <a href="/runs/{{.RunID}}/jobs/{{.JobID}}">{{.DisplayName}}</a> &rsaquo;
-    {{.Pod}} / {{.Container}}
+    {{if .TestName}}{{.TestName}}{{else}}All Test Logs{{end}}
   </nav>
 
   <div class="run-header">
-    <h1>
-      <span class="log-pod">{{.Pod}}</span>
-      <span class="log-sep">/</span>
-      <span class="log-container">{{.Container}}</span>
-    </h1>
+    <h1 class="test-name">{{if .TestName}}{{.TestName}}{{else}}All Test Logs{{end}}</h1>
   </div>
 
   <pre class="log-pre">{{range logLines .Content}}<span class="log-line">{{.}}</span>{{end}}</pre>

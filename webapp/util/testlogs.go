@@ -33,37 +33,77 @@ func HasTestStep(steps []*github.TaskStep) bool {
 	return false
 }
 
-// FetchAndParseTestResults downloads the job log, caches it under
-// k8s-webapp-cache/<runID>/job-<jobID>.log, and returns all parsed test results.
-func FetchAndParseTestResults(ctx context.Context, client *github.Client, owner, repo string, runID, jobID int64) ([]TestResult, error) {
+// fetchRawJobLog downloads (or reads from cache) the raw log for a job.
+func fetchRawJobLog(ctx context.Context, client *github.Client, owner, repo string, runID, jobID int64) ([]byte, error) {
 	cachePath := filepath.Join(os.TempDir(), "k8s-webapp-cache",
 		fmt.Sprintf("%d", runID), fmt.Sprintf("job-%d.log", jobID))
 
-	var logData []byte
 	if data, err := os.ReadFile(cachePath); err == nil {
-		logData = data
-	} else {
-		u, _, err := client.Actions.GetWorkflowJobLogs(ctx, owner, repo, jobID, 3)
-		if err != nil {
-			return nil, fmt.Errorf("getting job log URL: %w", err)
-		}
-		resp, err := http.Get(u.String())
-		if err != nil {
-			return nil, fmt.Errorf("downloading job logs: %w", err)
-		}
-		defer resp.Body.Close()
-
-		logData, err = io.ReadAll(resp.Body)
-		if err != nil {
-			return nil, fmt.Errorf("reading job logs: %w", err)
-		}
-
-		if err := os.MkdirAll(filepath.Dir(cachePath), 0755); err == nil {
-			os.WriteFile(cachePath, logData, 0644)
-		}
+		return data, nil
 	}
 
-	return parseTestResults(logData), nil
+	u, _, err := client.Actions.GetWorkflowJobLogs(ctx, owner, repo, jobID, 3)
+	if err != nil {
+		return nil, fmt.Errorf("getting job log URL: %w", err)
+	}
+	resp, err := http.Get(u.String())
+	if err != nil {
+		return nil, fmt.Errorf("downloading job logs: %w", err)
+	}
+	defer resp.Body.Close()
+
+	data, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("reading job logs: %w", err)
+	}
+
+	if err := os.MkdirAll(filepath.Dir(cachePath), 0755); err == nil {
+		os.WriteFile(cachePath, data, 0644)
+	}
+	return data, nil
+}
+
+// FetchAndParseTestResults downloads the job log, caches it under
+// k8s-webapp-cache/<runID>/job-<jobID>.log, and returns all parsed test results.
+func FetchAndParseTestResults(ctx context.Context, client *github.Client, owner, repo string, runID, jobID int64) ([]TestResult, error) {
+	data, err := fetchRawJobLog(ctx, client, owner, repo, runID, jobID)
+	if err != nil {
+		return nil, err
+	}
+	return parseTestResults(data), nil
+}
+
+// FetchFilteredTestLogs downloads the job log (using the same cache) and returns the
+// lines relevant to testName. If testName is empty, all lines are returned unfiltered.
+// Each line is matched by stripping the leading GHA timestamp prefix (up to the first space)
+// and checking whether the remainder starts with "<testName> ".
+// Lines not matching the "<testName> <timestamp>" format are omitted when filtering.
+func FetchFilteredTestLogs(ctx context.Context, client *github.Client, owner, repo string, runID, jobID int64, testName string) (string, error) {
+	data, err := fetchRawJobLog(ctx, client, owner, repo, runID, jobID)
+	if err != nil {
+		return "", err
+	}
+	if testName == "" {
+		return string(data), nil
+	}
+	return filterLogByTest(data, testName), nil
+}
+
+// filterLogByTest returns only the lines whose content (after stripping the leading GHA
+// timestamp) starts with "<testName> ". Lines that do not match this pattern are omitted.
+func filterLogByTest(data []byte, testName string) string {
+	scanner := bufio.NewScanner(bytes.NewReader(data))
+	var lines []string
+	parser := regexp.MustCompile(`\S+ (\S+) (\S+) \S+: (.*)`)
+	for scanner.Scan() {
+		line := scanner.Text()
+		// Strip leading GHA timestamp (everything up to and including the first space).
+		matches := parser.FindStringSubmatch(line)
+		if len(matches) == 4 && matches[1] == testName {
+			lines = append(lines, fmt.Sprintf("%v %v", matches[2], matches[3]))
+		}
+	}
+	return strings.Join(lines, "\n")
 }
 
 // parseTestResults scans log output for "--- PASS:" and "--- FAIL:" summary lines

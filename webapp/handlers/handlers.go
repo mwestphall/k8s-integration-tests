@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -34,6 +35,7 @@ func (a *App) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /runs/{runID}", a.handleRun)
 	mux.HandleFunc("GET /runs/{runID}/jobs/{jobID}", a.handleJob)
 	mux.HandleFunc("GET /runs/{runID}/jobs/{jobID}/logs/{pod}/{container}", a.handleLogs)
+	mux.HandleFunc("GET /runs/{runID}/jobs/{jobID}/testlogs", a.handleTestLogs)
 }
 
 func (a *App) render(w http.ResponseWriter, name string, data any) {
@@ -251,6 +253,48 @@ func (a *App) handleJob(w http.ResponseWriter, r *http.Request) {
 
 	data["Pods"] = pods
 	a.render(w, "job", data)
+}
+
+// handleTestLogs displays the GHA job step logs filtered to a specific test name.
+// The test name is taken from the "test" query parameter; if absent, all log lines are shown.
+func (a *App) handleTestLogs(w http.ResponseWriter, r *http.Request) {
+	runID, err := strconv.ParseInt(r.PathValue("runID"), 10, 64)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	jobID, err := strconv.ParseInt(r.PathValue("jobID"), 10, 64)
+	if err != nil {
+		http.NotFound(w, r)
+		return
+	}
+	testName := r.URL.Query().Get("test")
+
+	unescapedTestName, err := url.QueryUnescape(testName)
+	if err != nil {
+		a.httpError(w, fmt.Errorf("parsing test name: %w", err), http.StatusInternalServerError)
+	}
+
+	job, _, err := a.client.Actions.GetWorkflowJobByID(r.Context(), a.owner, a.repo, jobID)
+	if err != nil {
+		a.httpError(w, fmt.Errorf("getting job: %w", err), http.StatusInternalServerError)
+		return
+	}
+
+	content, err := util.FetchFilteredTestLogs(r.Context(), a.client, a.owner, a.repo, runID, jobID, unescapedTestName)
+	if err != nil {
+		a.httpError(w, fmt.Errorf("fetching test logs: %w", err), http.StatusInternalServerError)
+		return
+	}
+
+	a.render(w, "testlogs", map[string]any{
+		"RunID":       runID,
+		"JobID":       jobID,
+		"Job":         job,
+		"TestName":    unescapedTestName,
+		"Content":     content,
+		"DisplayName": util.JobDisplayName(job.GetName()),
+	})
 }
 
 // handleLogs displays the raw log file for a specific container in a specific pod.

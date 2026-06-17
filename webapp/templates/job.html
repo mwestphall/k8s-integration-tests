@@ -45,7 +45,13 @@
         {{range .TestResults}}
         <tr>
           <td><span class="badge {{statusClass .Status}}">{{.Status}}</span></td>
-          <td class="test-name">{{.Name}}</td>
+          <td class="test-name">
+            {{if isSubTest .Name}}
+            <a href="/runs/{{$.RunID}}/jobs/{{$.JobID}}/testlogs?test={{urlQuery .Name}}">{{.Name}}</a>
+            {{else}}
+            <a href="/runs/{{$.RunID}}/jobs/{{$.JobID}}/testlogs">{{.Name}}</a>
+            {{end}}
+          </td>
           <td class="test-duration">{{.Duration}}</td>
         </tr>
         {{end}}
@@ -66,7 +72,7 @@
     {{if .Events}}
     <details class="events-details">
       <summary>Pod Events</summary>
-      <pre class="events-pre">{{.Events}}</pre>
+      <pre class="events-pre">{{range logLines .Events}}<span class="log-line">{{.}}</span>{{end}}</pre>
     </details>
     {{else}}
     <p class="empty">No events recorded.</p>

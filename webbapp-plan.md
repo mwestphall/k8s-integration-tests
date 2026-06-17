@@ -66,10 +66,17 @@ Views
       * For jobs containing a step named `Test <Test Name>`, the logs for that test will contain several lines in the format `--- (PASS|FAIL): <Test Name> (test duration)`.
       * If a job contains the appropriate step, fetch its logs via the GitHub API and parse these lines to determine the pass/fail status of each test, and display a summary
         at the top of the page showing a table of the passing and failing tests.
+      * For each row in the table, link to the appropriate Logs View (Test Logs) page for that sub-text. See the description of the Logs View (Test Logs) below 
+        for details on how to determine the appropriate link for each test.
       * Cache the tests' logs as they're downloaded.
-    
       
-4. **Logs View**: For a specific container in a specific pod for a specific test, display the logs for that container as plain preformatted text (inside a `<pre>` element).
+4. **Logs View (Pod Logs)**: For a specific container in a specific pod for a specific test, display the logs for that container as plain preformatted text (inside a `<pre>` element).
+
+5. **Logs View (Test Logs)**: For a specific test job step (named `Test <Test Name>`), the output consists of Go test logs in the format of
+   `<TestName> <TimeStamp> <test code line> <log message>`. When a user clicks in from a test name in the Test Details View, 
+   they should be taken to a view showing the logs for that test. The logs for all tests come from the same `Test <Test Name>` step, so they can be fetched together. 
+   The viewer should filter the logs to only show lines relevant to the test that was clicked on (i.e. lines whose `<TestName>` matches the test that was clicked on).
+   Display the tests in a `<pre>` element, as in the Pod Logs view.
 
 Code Structure
 ==============
