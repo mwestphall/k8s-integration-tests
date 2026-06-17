@@ -1,0 +1,18 @@
+services:
+  webapp:
+    image: hub.opensciencegrid.org/osgpreview/k8s-integration-tests-viewer:latest
+    build:
+      context: .
+      dockerfile: webapp.Dockerfile
+    ports:
+      - "${PORT:-8080}:8080"
+    environment:
+      GITHUB_TOKEN: ${GITHUB_TOKEN}
+      GITHUB_OWNER: ${GITHUB_OWNER}
+      GITHUB_REPO: ${GITHUB_REPO}
+      PORT: "8080"
+    volumes:
+      - artifact-cache:/tmp/k8s-webapp-cache
+
+volumes:
+  artifact-cache:
