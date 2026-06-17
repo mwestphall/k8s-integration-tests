@@ -44,9 +44,9 @@ func main() {
 	funcMap := template.FuncMap{
 		"statusClass": func(conclusion string) string {
 			switch conclusion {
-			case "success":
+			case "success", "PASS":
 				return "status-success"
-			case "failure", "timed_out", "action_required":
+			case "failure", "timed_out", "action_required", "FAIL":
 				return "status-failure"
 			case "cancelled", "skipped":
 				return "status-cancelled"

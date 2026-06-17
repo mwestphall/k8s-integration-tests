@@ -28,6 +28,32 @@
     </div>
   </div>
 
+  {{if .TestResults}}
+  <section class="test-summary">
+    <h2 class="test-summary-heading">
+      Test Results
+      <span class="test-summary-counts">
+        <span class="count-success">{{.TestPassCount}} passed</span>
+        {{if .TestFailCount}}<span class="count-failure">{{.TestFailCount}} failed</span>{{end}}
+      </span>
+    </h2>
+    <table class="test-results-table">
+      <thead>
+        <tr><th>Status</th><th>Test</th><th>Duration</th></tr>
+      </thead>
+      <tbody>
+        {{range .TestResults}}
+        <tr>
+          <td><span class="badge {{statusClass .Status}}">{{.Status}}</span></td>
+          <td class="test-name">{{.Name}}</td>
+          <td class="test-duration">{{.Duration}}</td>
+        </tr>
+        {{end}}
+      </tbody>
+    </table>
+  </section>
+  {{end}}
+
   {{if not .Pods}}
     <p class="empty">No artifact available for this job.</p>
   {{else}}

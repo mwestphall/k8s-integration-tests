@@ -242,6 +242,55 @@ h3 { font-size: 15px; font-weight: 600; margin-bottom: 8px; }
 }
 .container-link:hover { background: #e1e4e8; text-decoration: none; }
 
+/* ── Test results summary ── */
+.test-summary {
+  background: #fff;
+  border: 1px solid #d0d7de;
+  border-radius: 6px;
+  margin-bottom: 24px;
+  overflow: hidden;
+}
+.test-summary-heading {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d0d7de;
+  font-size: 16px;
+}
+.test-summary-counts {
+  display: flex;
+  gap: 10px;
+  font-size: 13px;
+  font-weight: 400;
+}
+.test-results-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+.test-results-table th {
+  padding: 8px 16px;
+  text-align: left;
+  font-size: 12px;
+  font-weight: 600;
+  color: #656d76;
+  background: #f6f8fa;
+  border-bottom: 1px solid #d0d7de;
+}
+.test-results-table td {
+  padding: 7px 16px;
+  border-bottom: 1px solid #f0f0f0;
+  vertical-align: middle;
+}
+.test-results-table tr:last-child td { border-bottom: none; }
+.test-results-table tr:hover td { background: #f6f8fa; }
+.test-name {
+  font-family: "SFMono-Regular", Consolas, monospace;
+  font-size: 12px;
+}
+.test-duration { color: #656d76; font-size: 12px; }
+
 /* ── Logs page ── */
 .log-pod { color: #656d76; }
 .log-sep { margin: 0 6px; color: #d0d7de; }

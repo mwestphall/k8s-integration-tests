@@ -200,14 +200,35 @@ func (a *App) handleJob(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Fetch test results independently of artifact availability.
+	var testResults []util.TestResult
+	passCount, failCount := 0, 0
+	if util.HasTestStep(job.Steps) {
+		if results, err := util.FetchAndParseTestResults(r.Context(), a.client, a.owner, a.repo, runID, job.GetID()); err != nil {
+			log.Printf("fetching test results for job %d: %v", job.GetID(), err)
+		} else {
+			testResults = results
+			for _, res := range testResults {
+				if res.Status == "PASS" {
+					passCount++
+				} else {
+					failCount++
+				}
+			}
+		}
+	}
+
 	data := map[string]any{
-		"RunID":       runID,
-		"JobID":       jobID,
-		"Job":         job,
-		"Conclusion":  util.JobConclusion(job),
-		"DisplayName": util.JobDisplayName(job.GetName()),
-		"Matrix":      util.ParseJobMatrix(job.Steps),
-		"Pods":        nil,
+		"RunID":         runID,
+		"JobID":         jobID,
+		"Job":           job,
+		"Conclusion":    util.JobConclusion(job),
+		"DisplayName":   util.JobDisplayName(job.GetName()),
+		"Matrix":        util.ParseJobMatrix(job.Steps),
+		"Pods":          nil,
+		"TestResults":   testResults,
+		"TestPassCount": passCount,
+		"TestFailCount": failCount,
 	}
 
 	artifact := util.MatchArtifactToJob(job, artifactsResp.Artifacts)
