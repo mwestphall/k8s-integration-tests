@@ -29,15 +29,15 @@
   </div>
 
   {{if .TestResults}}
-  <section class="test-summary">
-    <h2 class="test-summary-heading">
+  <section class="test-summary card">
+    <h2 class="card-heading">
       Test Results
       <span class="test-summary-counts">
         <span class="count-success">{{.TestPassCount}} passed</span>
         {{if .TestFailCount}}<span class="count-failure">{{.TestFailCount}} failed</span>{{end}}
       </span>
     </h2>
-    <table class="test-results-table">
+    <table class="data-table test-results-table">
       <thead>
         <tr><th>Status</th><th>Test</th><th>Duration</th></tr>
       </thead>
@@ -66,7 +66,7 @@
   <h2>Pods</h2>
   {{range .Pods}}
   {{$pod := .Name}}
-  <section class="pod-section">
+  <section class="pod-section card">
     <h3 class="pod-heading">{{.Name}}</h3>
 
     {{if .Events}}
