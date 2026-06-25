@@ -100,6 +100,34 @@ func JobConclusion(job *github.WorkflowJob) string {
 	return job.GetConclusion()
 }
 
+// RunSummary holds the run and its jobs grouped by suite, as returned by FetchRunSummary.
+type RunSummary struct {
+	Run       *github.WorkflowRun
+	Suites    []SuiteStatus
+	SuiteJobs map[string][]*github.WorkflowJob
+}
+
+// FetchRunSummary fetches a workflow run and all its jobs, then groups the jobs by suite.
+// The error returned is the raw API error; callers may inspect it as *github.ErrorResponse
+// (e.g. to distinguish a 404 from other failures).
+func FetchRunSummary(ctx context.Context, client *github.Client, owner, repo string, runID int64) (*RunSummary, error) {
+	run, _, err := client.Actions.GetWorkflowRunByID(ctx, owner, repo, runID)
+	if err != nil {
+		return nil, err
+	}
+
+	jobsResp, _, err := client.Actions.ListWorkflowJobs(
+		ctx, owner, repo, runID,
+		&github.ListWorkflowJobsOptions{ListOptions: github.ListOptions{PerPage: 100}},
+	)
+	if err != nil {
+		return nil, fmt.Errorf("listing jobs: %w", err)
+	}
+
+	suites, suiteJobs := GroupJobsBySuite(jobsResp.Jobs)
+	return &RunSummary{Run: run, Suites: suites, SuiteJobs: suiteJobs}, nil
+}
+
 // GroupJobsBySuite partitions jobs by suite prefix and builds SuiteStatus summaries.
 // It returns the statuses in the order suites were first encountered, and a map from
 // suite name to the jobs in that suite.

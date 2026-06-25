@@ -10,3 +10,16 @@ jobs:
   pelican:
     uses: ./.github/workflows/test-pelican.yaml
     secrets: inherit
+
+  notify:
+    needs: [ospool-ep, pelican]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send email summary
+        run: |
+          curl -fsS -X POST \
+            -H "Authorization: Bearer ${{ secrets.EMAIL_WEBHOOK_TOKEN }}" \
+            -H "Content-Type: application/json" \
+            -d "{\"runID\": ${{ github.run_id }}}" \
+            "http://${{ vars.RESULTS_DOMAIN }}/webhook/email-summary"

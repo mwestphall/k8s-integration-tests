@@ -1,0 +1,38 @@
+{{define "email"}}
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><title>K8s Integration Test Results</title></head>
+<body style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;font-size:14px;color:#24292f;background:#f6f8fa;margin:0;padding:24px">
+  <div style="max-width:600px;margin:0 auto;background:#fff;border:1px solid #d0d7de;border-radius:6px;overflow:hidden">
+    <div style="background:#24292f;padding:16px 24px">
+      <span style="color:#fff;font-size:16px;font-weight:600">K8s Integration Tests</span>
+    </div>
+    <div style="padding:24px">
+      <p style="margin:0 0 4px;font-size:22px;font-weight:600">Run #{{.Run.GetID}}</p>
+      <p style="margin:0 0 24px;font-size:13px;color:#656d76">{{.Run.GetConclusion}} &bull; {{formatTime .Run.GetCreatedAt}}</p>
+
+      <table style="width:100%;border-collapse:collapse;margin-bottom:24px">
+        <thead>
+          <tr>
+            <th style="text-align:left;padding:8px 12px;font-size:12px;font-weight:600;color:#656d76;background:#f6f8fa;border-bottom:1px solid #d0d7de">Suite</th>
+            <th style="text-align:left;padding:8px 12px;font-size:12px;font-weight:600;color:#656d76;background:#f6f8fa;border-bottom:1px solid #d0d7de">Passed</th>
+            <th style="text-align:left;padding:8px 12px;font-size:12px;font-weight:600;color:#656d76;background:#f6f8fa;border-bottom:1px solid #d0d7de">Failed</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{range .Suites}}
+          <tr>
+            <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0">{{.Name}}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0;color:#1a7f37">{{.Success}}</td>
+            <td style="padding:8px 12px;border-bottom:1px solid #f0f0f0{{if .Failure}};color:#cf222e{{end}}">{{.Failure}}</td>
+          </tr>
+          {{end}}
+        </tbody>
+      </table>
+
+      <a href="{{.RunURL}}" style="color:#0969da;text-decoration:none">View full results &#8599;</a>
+    </div>
+  </div>
+</body>
+</html>
+{{end}}

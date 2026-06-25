@@ -16,6 +16,16 @@ import (
 	"github.com/osg-htc/k8s-integration-tests/webapp/util"
 )
 
+// EmailConfig holds configuration for the email summary webhook.
+type EmailConfig struct {
+	Token         string
+	ResultsDomain string
+	SMTPRelay     string
+	SMTPPort      string
+	FromAddress   string
+	ToAddresses   []string
+}
+
 // App holds shared dependencies for all HTTP handlers.
 type App struct {
 	client *github.Client
@@ -23,10 +33,11 @@ type App struct {
 	repo   string
 	tmpl   *template.Template
 	static fs.FS
+	email  EmailConfig
 }
 
-func NewApp(client *github.Client, owner, repo string, tmpl *template.Template, static fs.FS) *App {
-	return &App{client: client, owner: owner, repo: repo, tmpl: tmpl, static: static}
+func NewApp(client *github.Client, owner, repo string, tmpl *template.Template, static fs.FS, email EmailConfig) *App {
+	return &App{client: client, owner: owner, repo: repo, tmpl: tmpl, static: static, email: email}
 }
 
 func (a *App) RegisterRoutes(mux *http.ServeMux) {
@@ -36,6 +47,7 @@ func (a *App) RegisterRoutes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /runs/{runID}/jobs/{jobID}", a.handleJob)
 	mux.HandleFunc("GET /runs/{runID}/jobs/{jobID}/logs/{pod}/{container}", a.handleLogs)
 	mux.HandleFunc("GET /runs/{runID}/jobs/{jobID}/testlogs", a.handleTestLogs)
+	mux.HandleFunc("POST /webhook/email-summary", a.handleEmailWebhook)
 }
 
 func (a *App) render(w http.ResponseWriter, name string, data any) {
@@ -115,18 +127,9 @@ func (a *App) handleRun(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	run, _, err := a.client.Actions.GetWorkflowRunByID(r.Context(), a.owner, a.repo, runID)
+	summary, err := util.FetchRunSummary(r.Context(), a.client, a.owner, a.repo, runID)
 	if err != nil {
-		a.httpError(w, fmt.Errorf("getting run: %w", err), http.StatusInternalServerError)
-		return
-	}
-
-	jobsResp, _, err := a.client.Actions.ListWorkflowJobs(
-		r.Context(), a.owner, a.repo, runID,
-		&github.ListWorkflowJobsOptions{ListOptions: github.ListOptions{PerPage: 100}},
-	)
-	if err != nil {
-		a.httpError(w, fmt.Errorf("listing jobs: %w", err), http.StatusInternalServerError)
+		a.httpError(w, fmt.Errorf("fetching run: %w", err), http.StatusInternalServerError)
 		return
 	}
 
@@ -138,8 +141,6 @@ func (a *App) handleRun(w http.ResponseWriter, r *http.Request) {
 		a.httpError(w, fmt.Errorf("listing artifacts: %w", err), http.StatusInternalServerError)
 		return
 	}
-
-	suiteStatuses, suiteJobs := util.GroupJobsBySuite(jobsResp.Jobs)
 
 	type jobRow struct {
 		Job         *github.WorkflowJob
@@ -153,10 +154,10 @@ func (a *App) handleRun(w http.ResponseWriter, r *http.Request) {
 		Jobs   []jobRow
 	}
 
-	suiteRows := make([]suiteRow, 0, len(suiteStatuses))
-	for _, ss := range suiteStatuses {
-		jrows := make([]jobRow, 0, len(suiteJobs[ss.Name]))
-		for _, j := range suiteJobs[ss.Name] {
+	suiteRows := make([]suiteRow, 0, len(summary.Suites))
+	for _, ss := range summary.Suites {
+		jrows := make([]jobRow, 0, len(summary.SuiteJobs[ss.Name]))
+		for _, j := range summary.SuiteJobs[ss.Name] {
 			jrows = append(jrows, jobRow{
 				Job:         j,
 				HasArtifact: util.MatchArtifactToJob(j, artifactsResp.Artifacts) != nil,
@@ -169,7 +170,7 @@ func (a *App) handleRun(w http.ResponseWriter, r *http.Request) {
 	}
 
 	a.render(w, "run", map[string]any{
-		"Run":    run,
+		"Run":    summary.Run,
 		"Suites": suiteRows,
 	})
 }

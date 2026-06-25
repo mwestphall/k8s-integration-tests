@@ -43,6 +43,24 @@ func main() {
 		port = "8080"
 	}
 
+	toAddresses := []string{}
+	if toRaw := os.Getenv("TO_ADDRESS"); toRaw != "" {
+		parts := strings.Split(toRaw, ",")
+		for i := range parts {
+			parts[i] = strings.TrimSpace(parts[i])
+		}
+		toAddresses = parts
+	}
+
+	emailCfg := handlers.EmailConfig{
+		Token:         os.Getenv("EMAIL_TOKEN"),
+		ResultsDomain: os.Getenv("RESULTS_DOMAIN"),
+		SMTPRelay:     os.Getenv("SMTP_RELAY"),
+		SMTPPort:      os.Getenv("SMTP_PORT"),
+		FromAddress:   os.Getenv("FROM_ADDRESS"),
+		ToAddresses:   toAddresses,
+	}
+
 	funcMap := template.FuncMap{
 		"statusClass": func(conclusion string) string {
 			switch conclusion {
@@ -79,7 +97,7 @@ func main() {
 	}
 
 	client := util.NewGitHubClient(ctx, token)
-	app := handlers.NewApp(client, owner, repo, tmpl, staticFS)
+	app := handlers.NewApp(client, owner, repo, tmpl, staticFS, emailCfg)
 
 	mux := http.NewServeMux()
 	app.RegisterRoutes(mux)

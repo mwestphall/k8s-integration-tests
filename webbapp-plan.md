@@ -74,7 +74,7 @@ Views
 
 5. **Logs View (Test Logs)**: For a specific test job step (named `Test <Test Name>`), the output consists of Go test logs in the format of
    `<TestName> <TimeStamp> <test code line> <log message>`. When a user clicks in from a test name in the Test Details View, 
-   they should be taken to a view showing the logs for that test. The logs for all tests come from the same `Test <Test Name>` step, so they can be fetched together. 
+   they should be taken to a view showing the logs for that test, retrieved via the Github API for the `Test <Test Name>` step. The logs for all tests come from the same `Test <Test Name>` step, so they can be fetched together. 
    The viewer should filter the logs to only show lines relevant to the test that was clicked on (i.e. lines whose `<TestName>` matches the test that was clicked on).
    Display the tests in a `<pre>` element, as in the Pod Logs view.
 
@@ -86,3 +86,26 @@ The code will be organized into the following packages:
 3. `webapp/handlers`: HTTP handlers for the different views in the application.
 4. `webapp/templates`: HTML templates for the different views in the application.
 5. `webapp/static`: Static files (CSS, JS) for the application.
+
+Email Summary Webhook
+=====================
+In addition to the HTML template endpoints, the webapp should have a single webhook that delivers an email summary of a test run with the given workflow ID.
+The webhook should:
+* Listen for POST requests at `/webhook/email-summary`
+* Use API token authentication via an `Authorization: Bearer <token>` header.
+* Accept a JSON-formatted input body with a single `runID` parameter.
+* Using the given `runID`, produce an html email summary of the given test run.
+  * For each `test suite`, display the count of succeeding and failing tests (reuse existing logic to determine counts)
+  * Provide a link to the Run Details page of the input workflow.
+* Configure the email webhook via environment variables that specify the following:
+  * API token to expect (`EMAIL_TOKEN`, optional, default empty)
+  * Top level domain to link for test results (`RESULTS_DOMAIN`, optional, default empty), to be substituted into `https://<address>/runs/<runID>`
+  * Hostname and port of the SMTP server for email delivery. Assume an unauthenticated internal relay. (`SMTP_PORT`, `SMTP_RELAY`, both optional, default empty)
+  * From address (`FROM_ADDRESS`, optional, default empty)
+  * comma-separated To address list (`TO_ADDRESS`, optional, default empty)
+  * If any of the required variables are empty, return 500 when the route is hit.
+    * The goal here is to allow the site to be run without email relay functionality in testing, as significant configuration is required.
+* Deliver the email synchronously.
+* Upon completion:
+  * Return `200` plus an empty JSON object on successful delivery.
+  * Return an appropriate error code and brief "error" message in a JSON object on failure (403 for bad auth, 500 for error during delivery, 400 for invalid run ID)
