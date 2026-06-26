@@ -22,4 +22,4 @@ jobs:
             -H "Authorization: Bearer ${{ secrets.EMAIL_WEBHOOK_TOKEN }}" \
             -H "Content-Type: application/json" \
             -d "{\"runID\": ${{ github.run_id }}}" \
-            "http://${{ vars.RESULTS_DOMAIN }}/webhook/email-summary"
+            "https://${{ vars.RESULTS_DOMAIN }}/webhook/email-summary"
