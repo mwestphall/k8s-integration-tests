@@ -7,7 +7,7 @@ on:
         type: string
         required: true
       testEnv: 
-        description: 'The Environment to use for the test, encoded as a JSON string'
+        description: 'The Environment to use for the test, encoded as a YAML string'
         type: string
         required: true
       setupScript:
@@ -15,7 +15,7 @@ on:
         type: string
         required: false
       setupEnv:
-        description: 'Environment of the setup script, encoded as a JSON string'
+        description: 'Environment of the setup script, encoded as a YAML string'
         type: string
         required: false
         default: '{}'
@@ -27,11 +27,20 @@ jobs:
     steps:
     - name: Checkout
       uses: actions/checkout@v5
+    - name: Convert inputs to JSON
+      id: yaml-to-json-inputs
+      shell: bash
+      env:
+        TEST_ENV_YAML: ${{ inputs.testEnv }}
+        SETUP_ENV_YAML: ${{ inputs.setupEnv }}
+      run: |
+        echo "TEST_ENV=$(echo "$TEST_ENV_YAML" | yq -o json | tr -d '\n')" >> $GITHUB_OUTPUT
+        echo "SETUP_ENV=$(echo "$SETUP_ENV_YAML" | yq -o json | tr -d '\n')" >> $GITHUB_OUTPUT
 
     # Populate metadata into the step name for display on the web UI
     - id: serialize-env
       env:
-        TEST_ENV: ${{ inputs.testEnv }}
+        TEST_ENV: ${{ steps.yaml-to-json-inputs.outputs.TEST_ENV }}
       shell: bash
       run: echo "TEST_ENV=$(echo -n "$TEST_ENV" | tr '\n' ' ' | sed 's/\s\+/ /g')" >> $GITHUB_OUTPUT
     - name: 'Job Matrix: ${{ steps.serialize-env.outputs.TEST_ENV }}'
@@ -52,11 +61,11 @@ jobs:
     - name: Test Setup Scripts
       if: ${{ inputs.setupScript != '' }}
       shell: bash
-      env: ${{ fromJSON(inputs.setupEnv) }}  
+      env: ${{ fromJSON(steps.yaml-to-json-inputs.outputs.SETUP_ENV) }}  
       run: ${{ inputs.setupScript }}
       
     - name: 'Test ${{ inputs.testName }}'
-      env: ${{ fromJSON(inputs.testEnv) }}
+      env: ${{ fromJSON(steps.yaml-to-json-inputs.outputs.TEST_ENV) }}
       run: go test ./test -v -count 1 -run ${{ inputs.testName }} -timeout 15m
       
     # Upload artifacts after the fact, named such that they can be correlated to the test run using the hash of the test environment
