@@ -15,7 +15,9 @@ to disk, rather than repeatedly downloading the artifact on each view that needs
 Configuration
 =============
 The application is configured via environment variables:
-- `GITHUB_TOKEN` (required): Personal access token used to authenticate with the GitHub API.
+- `GITHUB_APP_ID` (required): App ID of the GitHub App used to authenticate with the GitHub API.
+- `GITHUB_APP_INSTALLATION_ID` (required): Installation ID of the GitHub App on `GITHUB_OWNER/GITHUB_REPO`.
+- `GITHUB_APP_PRIVATE_KEY_PATH` (required): Path to a file on disk containing the PEM-encoded private key of the GitHub App.
 - `GITHUB_OWNER` (required): The GitHub organization or user that owns the repository (e.g. `osg-htc`).
 - `GITHUB_REPO` (required): The repository name (e.g. `k8s-integration-tests`).
 - `PORT` (optional, default `8080`): The port the HTTP server listens on.

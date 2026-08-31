@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"embed"
 	"fmt"
 	"html/template"
@@ -10,6 +9,7 @@ import (
 	"net/http"
 	"net/url"
 	"os"
+	"strconv"
 	"strings"
 
 	"github.com/google/go-github/v68/github"
@@ -24,11 +24,25 @@ var templateFS embed.FS
 var rawStaticFS embed.FS
 
 func main() {
-	ctx := context.Background()
-
-	token := os.Getenv("GITHUB_TOKEN")
-	if token == "" {
-		log.Fatal("GITHUB_TOKEN environment variable is required")
+	appIDRaw := os.Getenv("GITHUB_APP_ID")
+	if appIDRaw == "" {
+		log.Fatal("GITHUB_APP_ID environment variable is required")
+	}
+	appID, err := strconv.ParseInt(appIDRaw, 10, 64)
+	if err != nil {
+		log.Fatalf("GITHUB_APP_ID must be an integer: %v", err)
+	}
+	installationIDRaw := os.Getenv("GITHUB_APP_INSTALLATION_ID")
+	if installationIDRaw == "" {
+		log.Fatal("GITHUB_APP_INSTALLATION_ID environment variable is required")
+	}
+	installationID, err := strconv.ParseInt(installationIDRaw, 10, 64)
+	if err != nil {
+		log.Fatalf("GITHUB_APP_INSTALLATION_ID must be an integer: %v", err)
+	}
+	privateKeyPath := os.Getenv("GITHUB_APP_PRIVATE_KEY_PATH")
+	if privateKeyPath == "" {
+		log.Fatal("GITHUB_APP_PRIVATE_KEY_PATH environment variable is required")
 	}
 	owner := os.Getenv("GITHUB_OWNER")
 	if owner == "" {
@@ -96,7 +110,10 @@ func main() {
 		log.Fatalf("preparing static FS: %v", err)
 	}
 
-	client := util.NewGitHubClient(ctx, token)
+	client, err := util.NewGitHubAppClient(appID, installationID, privateKeyPath)
+	if err != nil {
+		log.Fatalf("creating GitHub App client: %v", err)
+	}
 	app := handlers.NewApp(client, owner, repo, tmpl, staticFS, emailCfg)
 
 	mux := http.NewServeMux()
