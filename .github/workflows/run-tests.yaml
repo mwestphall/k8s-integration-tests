@@ -5,15 +5,17 @@ on:
     - cron: '0 0 * * *'  # runs every day at midnight UTC
 jobs:
   ospool-ep:
+    if: github.event_name != 'schedule' || github.repository_owner == 'osg-htc'
     uses: ./.github/workflows/test-ospool-ep.yaml
 
   pelican:
+    if: github.event_name != 'schedule' || github.repository_owner == 'osg-htc'
     uses: ./.github/workflows/test-pelican.yaml
     secrets: inherit
 
   notify:
     needs: [ospool-ep, pelican]
-    if: always()
+    if: always() && (github.event_name != 'schedule' || github.repository_owner == 'osg-htc')
     runs-on: ubuntu-latest
     steps:
       - name: Send email summary
