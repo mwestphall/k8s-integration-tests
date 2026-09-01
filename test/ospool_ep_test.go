@@ -116,19 +116,5 @@ func TestOSPoolEP(t *testing.T) {
 		return
 	}
 
-	t.Run("Confirm condor_status lists the EP.", func(t *testing.T) {
-		t.Parallel()
-		subtestCondorStatus(TestHandle{t, options})
-	})
-
-	t.Run("Confirm EP container advertises singularity.", func(t *testing.T) {
-		t.Parallel()
-		subtestHasSingularity(TestHandle{t, options})
-	})
-
-	t.Run("Confirm EP container advertises CVMFS", func(t *testing.T) {
-		t.Parallel()
-		subtestHasCVMFS(TestHandle{t, options})
-	})
-
+	th.RunTestConfigDir("../test-configs/ospool-ep")
 }
