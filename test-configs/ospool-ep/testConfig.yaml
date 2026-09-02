@@ -5,7 +5,6 @@ tests:
     labels:
       app: test-cm
   script: condor_status.sh
-  method: tryUntilSucceeds
   retry:
     timeout: 120
     wait: 10
@@ -16,7 +15,6 @@ tests:
     labels:
       app: test-cm
   script: has_singularity.sh
-  method: tryUntilSucceeds
   retry:
     timeout: 120
     wait: 10
@@ -27,7 +25,6 @@ tests:
     labels:
       app: test-cm
   script: has_cvmfs.sh
-  method: tryUntilSucceeds
   retry:
     timeout: 300
     wait: 30
