@@ -1,0 +1,23 @@
+---
+# HTCondor configuration for the test access point, enabling CLAIMTOBE
+# authentication so the test-runner pod can submit and query jobs.
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: condor-config-local
+data:
+  99-testing.conf: |
+    # Bind to all interfaces so other pods can reach us
+    BIND_ALL_INTERFACES = TRUE
+
+    # Use CLAIMTOBE auth so the test-runner can claim an identity
+    SEC_DEFAULT_AUTHENTICATION = REQUIRED
+    SEC_DEFAULT_AUTHENTICATION_METHODS = CLAIMTOBE, FS
+    SEC_DEFAULT_INTEGRITY = OPTIONAL
+    SEC_DEFAULT_ENCRYPTION = NEVER
+
+    # Allow anyone on the cluster network to read and write
+    ALLOW_READ = *
+    ALLOW_WRITE = *
+    ALLOW_NEGOTIATOR = *
+    ALLOW_ADMINISTRATOR = $(CONDOR_HOST), $(IP_ADDRESS)

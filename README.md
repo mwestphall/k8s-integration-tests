@@ -18,7 +18,11 @@ Each test suite creates a randomly-named namespace, applies a Kustomize manifest
 
 ### `manifests/`
 
-Each subdirectory corresponds to a single test suite and contains all Kubernetes resources needed to run it, grouped into a [Kustomize](https://kustomize.io/) bundle. See `manifests/ospool-ep/` as an example.
+Each subdirectory corresponds to a single test suite and contains all Kubernetes resources needed to run it, grouped into a [Kustomize](https://kustomize.io/) bundle. See `manifests/ospool-ep/` as an example. This directory is exclusively for go-templated Kubernetes manifests — Dockerfiles for images built as part of a test suite live under `images/` instead.
+
+### `images/`
+
+Dockerfiles for images built and used by a test suite, grouped by suite. Some suites need a purpose-built test-runner image rather than an existing published one — e.g. `images/adstash/`'s test-runner image, which a test suite may build directly into minikube as part of its own setup (see [Building Images Into Minikube](#building-images-into-minikube)) instead of publishing to a registry.
 
 ### `data/`
 
@@ -108,7 +112,19 @@ go test ./test -v -run TestOSPoolEP
 ```sh
 go test ./test -v -run TestPelican
 ```
+```sh
+go test ./test -v -run TestAdstash
+```
 
+`TestAdstash` builds its own test-runner image directly into minikube before applying manifests — see [Building Images Into Minikube](#building-images-into-minikube) below. No separate build step is needed.
+
+---
+
+## Building Images Into Minikube
+
+Some test suites need a purpose-built image rather than an existing published one — e.g. `images/adstash/`'s test-runner image, which bakes in a specific `elasticsearch-py`/`opensearch-py` combo per test run. Rather than publishing such images to a registry, a test suite can build them directly into minikube's own image store as part of its Go test setup, using `minikube image build`.
+
+`TestHandle.buildMinikubeImage` in `test/test_runner_utils.go` wraps this: given a Dockerfile directory, an image tag, and a map of build args, it shells out to `minikube image build` and fails the test on error. See its use in `test/adstash_test.go`, which builds a different image per `RunnerTag`/`ESPyVersion`/`OSPyVersion` combination before applying the kustomize dir. This requires no local `docker` CLI or `minikube docker-env` juggling, and works the same way locally and in CI.
 
 ---
 

@@ -1,0 +1,50 @@
+---
+# Test-runner pod. Runs the image built from images/adstash/Dockerfile, which
+# provides condor_adstash, the HTCondor python bindings, pytest, and the
+# elasticsearch-py/opensearch-py client libraries. The pod idles; test files
+# are copied in and executed at test time (see test-configs/adstash/).
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: runner
+  labels:
+    app: runner
+    app.kubernetes.io/name: runner
+    app.kubernetes.io/part-of: adstash
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: runner
+  template:
+    metadata:
+      labels:
+        app: runner
+        app.kubernetes.io/name: runner
+        app.kubernetes.io/part-of: adstash
+    spec:
+      enableServiceLinks: false
+      containers:
+        - name: runner
+          image: condor-adstash-tests:{{ .RunnerTag }}
+          imagePullPolicy: IfNotPresent
+          command: ["sleep", "infinity"]
+          env:
+            # Tells the vendored pytest suite which single backend is deployed
+            # (see test-configs/adstash/tests/test_0{1,3}_*.py).
+            - name: SE_BACKEND
+              value: "{{ .SEBackendKey }}"
+            - name: SE_HOST
+              value: "search:9200"
+            - name: _CONDOR_CONDOR_HOST
+              value: condor
+            - name: _CONDOR_SEC_DEFAULT_AUTHENTICATION
+              value: REQUIRED
+            - name: _CONDOR_SEC_DEFAULT_AUTHENTICATION_METHODS
+              value: CLAIMTOBE
+            - name: _CONDOR_SEC_DEFAULT_INTEGRITY
+              value: OPTIONAL
+            - name: _CONDOR_SEC_DEFAULT_ENCRYPTION
+              value: NEVER
+            - name: _CONDOR_SEC_CLAIMTOBE_IDENTITY
+              value: submituser@testing
