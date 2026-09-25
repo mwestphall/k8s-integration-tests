@@ -9,8 +9,6 @@ import socket
 import time
 
 import pytest
-import elasticsearch
-import opensearchpy
 
 
 # The single search-engine backend deployed by
@@ -22,9 +20,12 @@ SE_MAJOR = int(os.environ.get("SE_VERSION", "8.19.20").split(".")[0])
 
 
 def get_client():
+    # Conditional imports, only one client library is installed in each test-specific runner image
     if SE_CLIENT_TYPE == "elasticsearch":
+        import elasticsearch
         return elasticsearch.Elasticsearch(f"http://{SE_HOST}")
     else:
+        import opensearchpy
         host, port = SE_HOST.split(":")
         return opensearchpy.OpenSearch(hosts=[{"host": host, "port": int(port)}])
 

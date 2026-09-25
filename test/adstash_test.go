@@ -23,8 +23,7 @@ type adstashFormatArgs struct {
 	DBMajorTag    string // major version parsed from DBTag, e.g. "8" — selects version-specific env vars
 	CondorTag     string // htcondor/mini image tag
 	RunnerTag     string // test-runner image tag (encodes the ES/OS client-lib combo baked into it)
-	ESPyVersion   string // pip version constraint for elasticsearch-py, baked into the runner image at build time
-	OSPyVersion   string // pip version constraint for opensearch-py, baked into the runner image at build time
+	SEPyVersion   string // pip version constraint for the search library (es or os), baked into the runner image at build time
 }
 
 var defaultAdstashFormatArgs = adstashFormatArgs{
@@ -32,8 +31,7 @@ var defaultAdstashFormatArgs = adstashFormatArgs{
 	DBTag:         "8.19.20",
 	CondorTag:     "lts",
 	RunnerTag:     "es7py-os2py",
-	ESPyVersion:   "elasticsearch>=7,<8",
-	OSPyVersion:   "opensearch-py>=2,<3",
+	SEPyVersion:   "elasticsearch>=7,<8",
 }
 
 // TestAdstash runs the adstash test suite against the search-engine backend
@@ -46,12 +44,14 @@ func TestAdstash(t *testing.T) {
 	options := k8s.NewKubectlOptions("", "", namespace)
 	th := TestHandle{t, options}
 
+	// Populate the test params struct from the environment
+	th.fillTemplateStructFromEnv(&defaultAdstashFormatArgs, "ADSTASH_")
+
 	// Build the test-runner image into minikube
 	th.buildMinikubeImage("../images/adstash",
 		fmt.Sprintf("%v:%v", adstashRunnerImage, defaultAdstashFormatArgs.RunnerTag),
 		map[string]string{
-			"ES_PY_VERSION": defaultAdstashFormatArgs.ESPyVersion,
-			"OS_PY_VERSION": defaultAdstashFormatArgs.OSPyVersion,
+			"SE_PY_VERSION": defaultAdstashFormatArgs.SEPyVersion,
 		})
 
 	// Create a directory for log output
@@ -59,9 +59,6 @@ func TestAdstash(t *testing.T) {
 
 	// create k8s namespace for the test
 	k8s.CreateNamespace(t, options, namespace)
-
-	// Template the kustomize dir
-	th.fillTemplateStructFromEnv(&defaultAdstashFormatArgs, "ADSTASH_")
 
 	// Derive the major-version tag (e.g. "8") from the full DBTag (e.g. "8.19.20")
 	// used to select version-specific env vars in the rendered manifests.

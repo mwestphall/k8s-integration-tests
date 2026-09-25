@@ -13,8 +13,6 @@ import subprocess
 import time
 
 import pytest
-import elasticsearch
-import opensearchpy
 import htcondor2 as htcondor
 
 
@@ -30,9 +28,12 @@ INDEX_NAME = f"adstash-test-{SE_CLIENT_TYPE}"
 
 
 def get_se_client():
+    # Conditional imports, only one client library is installed in each test-specific runner image
     if SE_CLIENT_TYPE == "elasticsearch":
+        import elasticsearch
         return elasticsearch.Elasticsearch(f"http://{SE_HOST}", timeout=120)
     else:
+        import opensearchpy
         host, port = SE_HOST.split(":")
         return opensearchpy.OpenSearch(hosts=[{"host": host, "port": int(port)}], timeout=120)
 
