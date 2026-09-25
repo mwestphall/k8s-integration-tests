@@ -45,6 +45,14 @@ func TestAdstash(t *testing.T) {
 	options := k8s.NewKubectlOptions("", "", namespace)
 	th := TestHandle{t, options}
 
+	// Build the test-runner image into minikube
+	th.buildMinikubeImage("../images/adstash",
+		fmt.Sprintf("%v:%v", adstashRunnerImage, defaultAdstashFormatArgs.RunnerTag),
+		map[string]string{
+			"ES_PY_VERSION": defaultAdstashFormatArgs.ESPyVersion,
+			"OS_PY_VERSION": defaultAdstashFormatArgs.OSPyVersion,
+		})
+
 	// Create a directory for log output
 	logDir := th.makeLogDir(kustomizeDir)
 
@@ -54,13 +62,9 @@ func TestAdstash(t *testing.T) {
 	// Template the kustomize dir
 	th.fillTemplateStructFromEnv(&defaultAdstashFormatArgs, "ADSTASH_")
 
-	// Build the test-runner image into minikube before applying manifests.
-	th.buildMinikubeImage("../images/adstash",
-		fmt.Sprintf("%v:%v", adstashRunnerImage, defaultAdstashFormatArgs.RunnerTag),
-		map[string]string{
-			"ES_PY_VERSION": defaultAdstashFormatArgs.ESPyVersion,
-			"OS_PY_VERSION": defaultAdstashFormatArgs.OSPyVersion,
-		})
+	// create the pool password and IDToken the runner uses to authenticate to the schedd
+	tokenData := th.generatePoolPasswordAndIDToken("condor", "submituser@condor", "adstash-pool-token",
+		[]string{"READ", "WRITE"})
 
 	formattedKustomizeDir := th.formatKustomizeDir(kustomizeDir, defaultAdstashFormatArgs)
 
@@ -71,6 +75,7 @@ func TestAdstash(t *testing.T) {
 	t.Cleanup(func() {
 		th.dumpPodInformation(logDir)
 		k8s.DeleteNamespace(t, options, namespace)
+		th.deletePoolPasswordAndIDToken(tokenData)
 		k8s.KubectlDeleteFromKustomize(t, options, formattedKustomizeDir)
 		os.RemoveAll(formattedKustomizeDir)
 	})

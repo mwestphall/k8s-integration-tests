@@ -21,11 +21,11 @@ jobs:
             osPyVersion: "opensearch-py>=2,<3"
           # elasticsearch-py 9 is known to fail against condor_adstash in the
           # current AdStash version, so this combination is disabled.
-          # - seBackendKey: es9
-          #   dbTag: "9.4.4"
-          #   runnerTag: es9py-os2py
-          #   esPyVersion: "elasticsearch>=9,<10"
-          #   osPyVersion: "opensearch-py>=2,<3"
+          - seBackendKey: es9
+            dbTag: "9.4.4"
+            runnerTag: es9py-os2py
+            esPyVersion: "elasticsearch>=9,<10"
+            osPyVersion: "opensearch-py>=2,<3"
           - seBackendKey: os2
             dbTag: "2.19.4"
             runnerTag: es7py-os2py

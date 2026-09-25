@@ -38,7 +38,7 @@ spec:
               value: "false"
             - name: action.destructive_requires_name
               value: "false"
-{{- if eq .SEBackendKey "es7" }}
+{{- if hasPrefix "es" .SEBackendKey }}
             - name: xpack.security.enabled
               value: "false"
             - name: xpack.ml.enabled
@@ -55,61 +55,31 @@ spec:
               value: "false"
             - name: ES_JAVA_OPTS
               value: "-Xms512m -Xmx512m"
-{{- else if or (eq .SEBackendKey "es8") (eq .SEBackendKey "es9") }}
-            - name: xpack.security.enabled
-              value: "false"
-            - name: xpack.ml.enabled
-              value: "false"
-            - name: xpack.watcher.enabled
-              value: "false"
-            - name: xpack.graph.enabled
-              value: "false"
+  {{- if ne .SEBackendKey "es7" }}
             - name: xpack.profiling.enabled
               value: "false"
-            - name: stack.templates.enabled
+  {{- end }}
+{{- else }}
+            - name: plugins.index_state_management.history.enabled
               value: "false"
-            - name: ingest.geoip.downloader.enabled
+            - name: plugins.anomaly_detection.enabled
               value: "false"
-            - name: cluster.deprecation_indexing.enabled
+            - name: plugins.alerting.alert_history_enabled
               value: "false"
-            - name: ES_JAVA_OPTS
+            - name: DISABLE_SECURITY_PLUGIN
+              value: "true"
+            - name: DISABLE_INSTALL_DEMO_CONFIG
+              value: "true"
+            - name: DISABLE_PERFORMANCE_ANALYZER_AGENT_CLI
+              value: "true"
+            - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
+              value: "NotUsed_SecurityDisabled1!"
+            - name: OPENSEARCH_JAVA_OPTS
               value: "-Xms512m -Xmx512m"
-{{- else if eq .SEBackendKey "os2" }}
+  {{- if eq .SEBackendKey "os2" }}
             - name: plugins.index_state_management.enabled
               value: "false"
-            - name: plugins.index_state_management.history.enabled
-              value: "false"
-            - name: plugins.anomaly_detection.enabled
-              value: "false"
-            - name: plugins.alerting.alert_history_enabled
-              value: "false"
-            - name: DISABLE_SECURITY_PLUGIN
-              value: "true"
-            - name: DISABLE_INSTALL_DEMO_CONFIG
-              value: "true"
-            - name: DISABLE_PERFORMANCE_ANALYZER_AGENT_CLI
-              value: "true"
-            - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
-              value: "NotUsed_SecurityDisabled1!"
-            - name: OPENSEARCH_JAVA_OPTS
-              value: "-Xms512m -Xmx512m"
-{{- else if eq .SEBackendKey "os3" }}
-            - name: plugins.index_state_management.history.enabled
-              value: "false"
-            - name: plugins.anomaly_detection.enabled
-              value: "false"
-            - name: plugins.alerting.alert_history_enabled
-              value: "false"
-            - name: DISABLE_SECURITY_PLUGIN
-              value: "true"
-            - name: DISABLE_INSTALL_DEMO_CONFIG
-              value: "true"
-            - name: DISABLE_PERFORMANCE_ANALYZER_AGENT_CLI
-              value: "true"
-            - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
-              value: "NotUsed_SecurityDisabled1!"
-            - name: OPENSEARCH_JAVA_OPTS
-              value: "-Xms512m -Xmx512m"
+  {{- end }}
 {{- end }}
           resources:
             limits:

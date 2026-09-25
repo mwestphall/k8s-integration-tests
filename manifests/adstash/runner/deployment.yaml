@@ -24,6 +24,22 @@ spec:
         app.kubernetes.io/part-of: adstash
     spec:
       enableServiceLinks: false
+      # HTCondor requires its token file to be owned by the user reading it,
+      # but Kubernetes always mounts Secret volumes as root. This copies the
+      # token into a writable volume owned by submituser (uid/gid 1001).
+      initContainers:
+        - name: fix-token-ownership
+          image: condor-adstash-tests:{{ .RunnerTag }}
+          imagePullPolicy: IfNotPresent
+          securityContext:
+            runAsUser: 0
+          command: ["sh", "-c", "cp /run/secrets/adstash-pool-token/token /tokens.d/adstash.token && chown 1001:1001 /tokens.d/adstash.token && chmod 0600 /tokens.d/adstash.token"]
+          volumeMounts:
+            - name: adstash-pool-token-secret
+              mountPath: /run/secrets/adstash-pool-token
+              readOnly: true
+            - name: adstash-pool-token
+              mountPath: /tokens.d
       containers:
         - name: runner
           image: condor-adstash-tests:{{ .RunnerTag }}
@@ -41,10 +57,17 @@ spec:
             - name: _CONDOR_SEC_DEFAULT_AUTHENTICATION
               value: REQUIRED
             - name: _CONDOR_SEC_DEFAULT_AUTHENTICATION_METHODS
-              value: CLAIMTOBE
+              value: IDTOKENS
             - name: _CONDOR_SEC_DEFAULT_INTEGRITY
               value: OPTIONAL
             - name: _CONDOR_SEC_DEFAULT_ENCRYPTION
               value: NEVER
-            - name: _CONDOR_SEC_CLAIMTOBE_IDENTITY
-              value: submituser@testing
+          volumeMounts:
+            - name: adstash-pool-token
+              mountPath: /home/submituser/.condor/tokens.d
+      volumes:
+        - name: adstash-pool-token-secret
+          secret:
+            secretName: adstash-pool-token
+        - name: adstash-pool-token
+          emptyDir: {}

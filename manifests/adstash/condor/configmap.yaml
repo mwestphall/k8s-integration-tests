@@ -1,5 +1,5 @@
 ---
-# HTCondor configuration for the test access point, enabling CLAIMTOBE
+# HTCondor configuration for the test access point, enabling IDTOKENS
 # authentication so the test-runner pod can submit and query jobs.
 apiVersion: v1
 kind: ConfigMap
@@ -10,9 +10,9 @@ data:
     # Bind to all interfaces so other pods can reach us
     BIND_ALL_INTERFACES = TRUE
 
-    # Use CLAIMTOBE auth so the test-runner can claim an identity
+    # Use IDTOKENS auth for the test-runner; FS auth for local commands
     SEC_DEFAULT_AUTHENTICATION = REQUIRED
-    SEC_DEFAULT_AUTHENTICATION_METHODS = CLAIMTOBE, FS
+    SEC_DEFAULT_AUTHENTICATION_METHODS = IDTOKENS, FS
     SEC_DEFAULT_INTEGRITY = OPTIONAL
     SEC_DEFAULT_ENCRYPTION = NEVER
 

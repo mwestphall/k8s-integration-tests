@@ -27,6 +27,9 @@ spec:
         - name: condor
           image: htcondor/mini:{{ .CondorTag }}
           imagePullPolicy: IfNotPresent
+          env:
+            - name: _CONDOR_TRUST_DOMAIN
+              value: condor
           ports:
             - name: shared-port
               containerPort: 9618
@@ -42,7 +45,14 @@ spec:
               mountPath: /etc/condor/config.d/99-testing.conf
               subPath: 99-testing.conf
               readOnly: true
+            - name: pool-passwd
+              mountPath: /etc/condor/passwords.d/POOL
+              subPath: POOL
       volumes:
         - name: condor-config-local
           configMap:
             name: condor-config-local
+        - name: pool-passwd
+          secret:
+            secretName: pool-passwd
+            defaultMode: 0600
