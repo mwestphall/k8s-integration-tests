@@ -9,29 +9,29 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - seBackendKey: es7
+          - seBackendType: elasticsearch
             dbTag: "7.17.23"
             runnerTag: es7py-os2py
             esPyVersion: "elasticsearch>=7,<8"
             osPyVersion: "opensearch-py>=2,<3"
-          - seBackendKey: es8
+          - seBackendType: elasticsearch
             dbTag: "8.19.20"
             runnerTag: es8py-os2py
             esPyVersion: "elasticsearch>=8,<9"
             osPyVersion: "opensearch-py>=2,<3"
           # elasticsearch-py 9 is known to fail against condor_adstash in the
           # current AdStash version, so this combination is disabled.
-          - seBackendKey: es9
+          - seBackendType: elasticsearch
             dbTag: "9.4.4"
             runnerTag: es9py-os2py
             esPyVersion: "elasticsearch>=9,<10"
             osPyVersion: "opensearch-py>=2,<3"
-          - seBackendKey: os2
+          - seBackendType: opensearch
             dbTag: "2.19.4"
             runnerTag: es7py-os2py
             esPyVersion: "elasticsearch>=7,<8"
             osPyVersion: "opensearch-py>=2,<3"
-          - seBackendKey: os3
+          - seBackendType: opensearch
             dbTag: "3.5.0"
             runnerTag: es7py-os3py
             esPyVersion: "elasticsearch>=7,<8"
@@ -40,7 +40,7 @@ jobs:
     with:
       testName: TestAdstash
       testEnv: |
-        ADSTASH_SEBackendKey: ${{ matrix.seBackendKey }}
+        ADSTASH_SEBackendType: ${{ matrix.seBackendType }}
         ADSTASH_DBTag: ${{ matrix.dbTag }}
         ADSTASH_RunnerTag: ${{ matrix.runnerTag }}
         ADSTASH_ESPyVersion: ${{ matrix.esPyVersion }}

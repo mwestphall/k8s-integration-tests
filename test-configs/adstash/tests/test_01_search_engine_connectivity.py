@@ -13,13 +13,12 @@ import elasticsearch
 import opensearchpy
 
 
-# The single search-engine backend deployed by manifests/adstash/search/deployment.yaml;
-# SE_BACKEND/SE_HOST are set by manifests/adstash/runner/deployment.yaml to match.
-_SE_MAJOR = {"es7": 7, "es8": 8, "es9": 9, "os2": 2, "os3": 3}
-SE_BACKEND = os.environ.get("SE_BACKEND", "es8")
+# The single search-engine backend deployed by
+# manifests/adstash/search/deployment-{es,os}.yaml; SE_BACKEND/SE_VERSION/SE_HOST
+# are set by manifests/adstash/runner/deployment.yaml to match.
+SE_CLIENT_TYPE = os.environ.get("SE_BACKEND", "elasticsearch")
 SE_HOST = os.environ.get("SE_HOST", "localhost:9200")
-SE_CLIENT_TYPE = "opensearch" if SE_BACKEND.startswith("os") else "elasticsearch"
-SE_MAJOR = _SE_MAJOR[SE_BACKEND]
+SE_MAJOR = int(os.environ.get("SE_VERSION", "8.19.20").split(".")[0])
 
 
 def get_client():
@@ -36,7 +35,7 @@ def client():
     try:
         socket.getaddrinfo(host, None)
     except socket.gaierror:
-        pytest.skip(f"{SE_BACKEND} ({host}) not in DNS, container not running")
+        pytest.skip(f"{SE_CLIENT_TYPE} ({host}) not in DNS, container not running")
 
     c = get_client()
     # Wait up to 60s for the backend to become healthy
@@ -47,7 +46,7 @@ def client():
         except Exception:
             pass
         time.sleep(5)
-    pytest.skip(f"{SE_BACKEND} not reachable after 60s")
+    pytest.skip(f"{SE_CLIENT_TYPE} not reachable after 60s")
 
 
 class TestConnectivity:

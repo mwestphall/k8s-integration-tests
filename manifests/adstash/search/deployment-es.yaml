@@ -1,7 +1,7 @@
 ---
-# Search-engine deployment for the adstash test suite. SEBackendKey (one of:
-# es7, es8, es9, os2, os3) selects which image and version to deploy, along
-# with the environment variables specific to that backend.
+# Elasticsearch deployment for the adstash test suite. DBMajorTag (the ES
+# major version, e.g. 7/8/9) selects whether xpack.profiling.enabled is set
+# (unavailable on major version 7).
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -25,7 +25,7 @@ spec:
       enableServiceLinks: false
       containers:
         - name: search
-          image: {{ if hasPrefix "es" .SEBackendKey }}docker.elastic.co/elasticsearch/elasticsearch{{ else }}opensearchproject/opensearch{{ end }}:{{ .DBTag }}
+          image: docker.elastic.co/elasticsearch/elasticsearch:{{ .DBTag }}
           imagePullPolicy: IfNotPresent
           ports:
             - name: http
@@ -38,7 +38,6 @@ spec:
               value: "false"
             - name: action.destructive_requires_name
               value: "false"
-{{- if hasPrefix "es" .SEBackendKey }}
             - name: xpack.security.enabled
               value: "false"
             - name: xpack.ml.enabled
@@ -47,6 +46,10 @@ spec:
               value: "false"
             - name: xpack.graph.enabled
               value: "false"
+{{- if ne .DBMajorTag "7" }}
+            - name: xpack.profiling.enabled
+              value: "false"
+{{- end }}
             - name: stack.templates.enabled
               value: "false"
             - name: ingest.geoip.downloader.enabled
@@ -55,32 +58,6 @@ spec:
               value: "false"
             - name: ES_JAVA_OPTS
               value: "-Xms512m -Xmx512m"
-  {{- if ne .SEBackendKey "es7" }}
-            - name: xpack.profiling.enabled
-              value: "false"
-  {{- end }}
-{{- else }}
-            - name: plugins.index_state_management.history.enabled
-              value: "false"
-            - name: plugins.anomaly_detection.enabled
-              value: "false"
-            - name: plugins.alerting.alert_history_enabled
-              value: "false"
-            - name: DISABLE_SECURITY_PLUGIN
-              value: "true"
-            - name: DISABLE_INSTALL_DEMO_CONFIG
-              value: "true"
-            - name: DISABLE_PERFORMANCE_ANALYZER_AGENT_CLI
-              value: "true"
-            - name: OPENSEARCH_INITIAL_ADMIN_PASSWORD
-              value: "NotUsed_SecurityDisabled1!"
-            - name: OPENSEARCH_JAVA_OPTS
-              value: "-Xms512m -Xmx512m"
-  {{- if eq .SEBackendKey "os2" }}
-            - name: plugins.index_state_management.enabled
-              value: "false"
-  {{- end }}
-{{- end }}
           resources:
             limits:
               memory: 1Gi
@@ -95,7 +72,7 @@ spec:
             failureThreshold: 12
           volumeMounts:
             - name: search-data
-              mountPath: {{ if hasPrefix "es" .SEBackendKey }}/usr/share/elasticsearch/data{{ else }}/usr/share/opensearch/data{{ end }}
+              mountPath: /usr/share/elasticsearch/data
       volumes:
         # RAM-backed data directory.
         - name: search-data

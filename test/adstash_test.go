@@ -18,21 +18,22 @@ const adstashRunnerImage = "condor-adstash-tests"
 // HTCondor image, and the test-runner image (which bakes in a specific
 // elasticsearch-py/opensearch-py combo at build time).
 type adstashFormatArgs struct {
-	SEBackendKey string // es7 | es8 | es9 | os2 | os3 — selects the search-engine image/version and its env vars
-	DBTag        string // search-engine image tag matching SEBackendKey's family
-	CondorTag    string // htcondor/mini image tag
-	RunnerTag    string // test-runner image tag (encodes the ES/OS client-lib combo baked into it)
-	ESPyVersion  string // pip version constraint for elasticsearch-py, baked into the runner image at build time
-	OSPyVersion  string // pip version constraint for opensearch-py, baked into the runner image at build time
+	SEBackendType string // elasticsearch | opensearch — selects the search-engine image family
+	DBTag         string // full search-engine image tag, e.g. "8.19.20"
+	DBMajorTag    string // major version parsed from DBTag, e.g. "8" — selects version-specific env vars
+	CondorTag     string // htcondor/mini image tag
+	RunnerTag     string // test-runner image tag (encodes the ES/OS client-lib combo baked into it)
+	ESPyVersion   string // pip version constraint for elasticsearch-py, baked into the runner image at build time
+	OSPyVersion   string // pip version constraint for opensearch-py, baked into the runner image at build time
 }
 
 var defaultAdstashFormatArgs = adstashFormatArgs{
-	SEBackendKey: "es8",
-	DBTag:        "8.19.20",
-	CondorTag:    "lts",
-	RunnerTag:    "es7py-os2py",
-	ESPyVersion:  "elasticsearch>=7,<8",
-	OSPyVersion:  "opensearch-py>=2,<3",
+	SEBackendType: "elasticsearch",
+	DBTag:         "8.19.20",
+	CondorTag:     "lts",
+	RunnerTag:     "es7py-os2py",
+	ESPyVersion:   "elasticsearch>=7,<8",
+	OSPyVersion:   "opensearch-py>=2,<3",
 }
 
 // TestAdstash runs the adstash test suite against the search-engine backend
@@ -61,6 +62,10 @@ func TestAdstash(t *testing.T) {
 
 	// Template the kustomize dir
 	th.fillTemplateStructFromEnv(&defaultAdstashFormatArgs, "ADSTASH_")
+
+	// Derive the major-version tag (e.g. "8") from the full DBTag (e.g. "8.19.20")
+	// used to select version-specific env vars in the rendered manifests.
+	defaultAdstashFormatArgs.DBMajorTag = strings.SplitN(defaultAdstashFormatArgs.DBTag, ".", 2)[0]
 
 	// create the pool password and IDToken the runner uses to authenticate to the schedd
 	tokenData := th.generatePoolPasswordAndIDToken("condor", "submituser@condor", "adstash-pool-token",

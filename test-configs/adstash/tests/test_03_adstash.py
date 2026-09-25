@@ -20,13 +20,13 @@ import htcondor2 as htcondor
 
 CONDOR_HOST = "condor"
 
-# The single search-engine backend deployed by manifests/adstash/search/deployment.yaml;
-# SE_BACKEND/SE_HOST are set by manifests/adstash/runner/deployment.yaml to match.
-SE_BACKEND = os.environ.get("SE_BACKEND", "es8")
+# The single search-engine backend deployed by
+# manifests/adstash/search/deployment-{es,os}.yaml; SE_BACKEND/SE_HOST are set
+# by manifests/adstash/runner/deployment.yaml to match.
+SE_CLIENT_TYPE = os.environ.get("SE_BACKEND", "elasticsearch")
 SE_HOST = os.environ.get("SE_HOST", "localhost:9200")
-SE_CLIENT_TYPE = "opensearch" if SE_BACKEND.startswith("os") else "elasticsearch"
 SE_INTERFACE = SE_CLIENT_TYPE
-INDEX_NAME = f"adstash-test-{SE_BACKEND}"
+INDEX_NAME = f"adstash-test-{SE_CLIENT_TYPE}"
 
 
 def get_se_client():
@@ -109,7 +109,7 @@ def se_client():
     try:
         socket.getaddrinfo(host, None)
     except socket.gaierror:
-        pytest.skip(f"{SE_BACKEND} ({host}) not in DNS, container not running")
+        pytest.skip(f"{SE_CLIENT_TYPE} ({host}) not in DNS, container not running")
     c = get_se_client()
     for attempt in range(12):
         try:
@@ -118,7 +118,7 @@ def se_client():
         except Exception:
             pass
         time.sleep(5)
-    pytest.skip(f"{SE_BACKEND} not reachable after 60s")
+    pytest.skip(f"{SE_CLIENT_TYPE} not reachable after 60s")
 
 
 def init_and_create_index(se_client, init_dir):
@@ -193,7 +193,7 @@ class TestAdstashPush:
 
     def test_init_index(self, se_client, tmp_path):
         try:
-            init_and_create_index(se_client, str(tmp_path / SE_BACKEND))
+            init_and_create_index(se_client, str(tmp_path / SE_CLIENT_TYPE))
         except Exception as e:
             print(f"\ninit_and_create_index failed: {e.__class__.__name__}: {e}")
             raise
@@ -211,15 +211,15 @@ class TestAdstashPush:
                 "--se_host", SE_HOST,
                 "--se_index_name", INDEX_NAME,
                 "--log_level", "DEBUG",
-                "--log_file", f"/tmp/adstash_{SE_BACKEND}.log",
-                "--checkpoint_file", f"/tmp/adstash_{SE_BACKEND}_checkpoint.json",
+                "--log_file", f"/tmp/adstash_{SE_CLIENT_TYPE}.log",
+                "--checkpoint_file", f"/tmp/adstash_{SE_CLIENT_TYPE}_checkpoint.json",
             ],
             capture_output=True,
             text=True,
             timeout=120,
         )
-        print(f"\n--- condor_adstash stdout ({SE_BACKEND}) ---\n{result.stdout}")
-        print(f"--- condor_adstash stderr ({SE_BACKEND}) ---\n{result.stderr}")
+        print(f"\n--- condor_adstash stdout ({SE_CLIENT_TYPE}) ---\n{result.stdout}")
+        print(f"--- condor_adstash stderr ({SE_CLIENT_TYPE}) ---\n{result.stderr}")
         assert result.returncode == 0, f"condor_adstash failed: {result.stderr}"
 
     def test_docs_landed(self, completed_job, se_client):

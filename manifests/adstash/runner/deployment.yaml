@@ -49,7 +49,9 @@ spec:
             # Tells the vendored pytest suite which single backend is deployed
             # (see test-configs/adstash/tests/test_0{1,3}_*.py).
             - name: SE_BACKEND
-              value: "{{ .SEBackendKey }}"
+              value: "{{ .SEBackendType }}"
+            - name: SE_VERSION
+              value: "{{ .DBTag }}"
             - name: SE_HOST
               value: "search:9200"
             - name: _CONDOR_CONDOR_HOST
