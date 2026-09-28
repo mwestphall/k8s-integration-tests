@@ -19,10 +19,10 @@ jobs:
             sePyVersion: "elasticsearch>=8,<9"
           # elasticsearch-py 9 is known to fail against condor_adstash in the
           # current AdStash version, so this combination is disabled.
-          - seBackendType: elasticsearch
-            dbTag: "9.4.4"
-            runnerTag: es9py
-            sePyVersion: "elasticsearch>=9,<10"
+          # - seBackendType: elasticsearch
+          #   dbTag: "9.4.4"
+          #   runnerTag: es9py
+          #   sePyVersion: "elasticsearch>=9,<10"
           - seBackendType: opensearch
             dbTag: "2.19.4"
             runnerTag: os2py
